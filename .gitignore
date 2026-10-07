@@ -1,0 +1,35 @@
+# Credentials and local state
+.env
+.env.*
+!.env.example
+.local/
+.tools/
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Frontend/build output
+node_modules/
+dist/
+build/
+playwright-report/
+test-results/
+
+# Local editors and operating-system files
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# Historical career discussion: retain locally, outside the product repository
+overall context.txt
