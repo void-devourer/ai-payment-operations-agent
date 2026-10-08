@@ -2,7 +2,10 @@
 
 Updated: 2026-10-08. User decision: finish the independent simulator path and
 add account-managed Stripe credentials later. No temporary Stripe sandbox or
-existing CLI profile is used. Hosted Phase 2 CI is pending until the push is checked.
+existing CLI profile is used. The initial simulator implementation passed
+[hosted CI](https://github.com/void-devourer/ai-payment-operations-agent/actions/runs/37815328918)
+on `4257a83`; current-commit results are available in
+[Software checks](https://github.com/void-devourer/ai-payment-operations-agent/actions/workflows/ci.yml).
 
 ## Delivered workflow
 
@@ -68,10 +71,10 @@ generation detects changes between the payment read and reversal pages.
 
 ## Verification
 
-Local result: 47 unit tests, 8 Phase 1 PostgreSQL/HTTP checks, 15 Phase 2 checks,
+Local result: 47 unit tests, 8 Phase 1 PostgreSQL/HTTP checks, 16 Phase 2 checks,
 automatic webhook/evidence recovery, and the console-outage regression passed.
 The existing PostgreSQL volume was upgraded through new `002` migrations without
-editing an applied migration or deleting data. Hosted CI remains to be checked.
+editing an applied migration or deleting data. CI runs the same suites from a fresh checkout.
 
 Commands:
 
@@ -91,7 +94,7 @@ current reads despite misleading snapshots; full/partial reversal pagination; RL
 and append-only observations; expired ownership and reclaim; notification during
 read; denied reads, CSRF/audit/redrive; throttling; event-before-registration;
 all-attempt coverage and manual capture; stale generations; concurrent claims;
-binding mismatch; and retry exhaustion. A final running-worker check verifies
+binding mismatch; retry exhaustion; and a reversal arriving between reads. A final running-worker check verifies
 automatic delivery and evidence collection after restart.
 
 Hosted CI runs this suite after the existing Phase 1 and outage checks. Benchmarks,

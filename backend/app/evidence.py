@@ -102,8 +102,10 @@ def reversals(reader, settings, intent, kind, generation):
     for _ in range(MAX_PAGES):
         page=reader.get(settings.simulator_url,f"/internal/payments/{intent}/{kind}","provider",
                         {"limit":20,**({"starting_after":after} if after else {})})
+        if page.get("reversal_generation")!=generation:
+            raise ReadFailure("reversal_changed")
         require(page.get("payment_intent_id")==intent and page.get("api_version")=="simulator.v1"
-                and page.get("reversal_generation")==generation and page.get("complete") is True
+                and page.get("complete") is True
                 and isinstance(page.get("data"),list) and type(page.get("has_more")) is bool and len(page["data"])<=20)
         for row in page["data"]:
             require(isinstance(row,dict) and isinstance(row.get("id"),str) and row["id"] not in seen
@@ -146,6 +148,8 @@ def publish(database,job,purchase,attempts,generation,facts,started,finished,err
         cursor.execute("SELECT payment_intent_id FROM payment_attempts WHERE purchase_id=%s ORDER BY payment_intent_id", (purchase["purchase_id"],))
         if [row["payment_intent_id"] for row in cursor.fetchall()]!=attempts:
             raise ReadFailure("attempt_set_changed")
+        # A head lock may have waited: recheck expiry before writing incomplete observations too.
+        lock_owned(cursor,job)
         cursor.execute("""INSERT INTO observations VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (job["workspace_id"],observation_id,purchase["purchase_id"],job["job_id"],generation,Json(facts),
              hashlib.sha256(canonical.encode()).hexdigest(),started,finished,"simulator_api_and_target","simulator.v1","evidence_v1"))

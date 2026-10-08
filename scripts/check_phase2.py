@@ -13,6 +13,7 @@ import time
 from types import SimpleNamespace
 import unittest
 import uuid
+from unittest.mock import patch
 
 import httpx
 import psycopg2
@@ -22,7 +23,7 @@ sys.path.insert(0,str(ROOT))
 from scripts.check_phase1 import local_environment
 from backend.app.config import Settings
 from backend.app.database import Database
-from backend.app.evidence import begin,collect,publish
+from backend.app.evidence import Reader,begin,collect,publish
 from backend.app.ingestion import parse_event,persist_receipt
 from backend.app.jobs import ReadFailure,claim,enqueue,fail,finish,heartbeat,reserve_request
 from backend.app.main import create_app
@@ -367,6 +368,30 @@ class Phase2IntegrationTests(unittest.TestCase):
         with self.database.transaction('ws_a') as cursor:
             cursor.execute('SELECT state,last_error FROM jobs WHERE job_id=%s',(job['job_id'],))
             self.assertEqual(dict(cursor.fetchone()),{'state':'dead','last_error':'upstream_unavailable'})
+
+    def test_16_reversal_arriving_between_reads_is_retryable(self):
+        body,intent=self.purchase()
+        job=self.lease(intent)
+        original=Reader.get
+        inserted=False
+        def changing_read(reader,base,path,purpose,params=None):
+            nonlocal inserted
+            if path.endswith('/refunds') and not inserted:
+                self.http.post(f'http://127.0.0.1:8002/internal/payments/{intent}/refunds',headers=self.headers(),
+                    json={'resource_id':'concurrent_refund','status':'pending','amount_minor':1}).raise_for_status()
+                inserted=True
+            return original(reader,base,path,purpose,params)
+        with patch.object(Reader,'get',changing_read):
+            with self.assertRaises(ReadFailure) as raised:
+                collect(self.app,job)
+        self.assertEqual(raised.exception.code,'reversal_changed')
+        self.assertTrue(raised.exception.retryable)
+        fail(self.database,job,raised.exception)
+        self.assertFalse(self.facts(body['purchase_id'])['facts']['reversal_complete'])
+        collect(self.app,self.lease(intent))
+        facts=self.facts(body['purchase_id'])['facts']
+        self.assertTrue(facts['reversal_complete'])
+        self.assertEqual(len(facts['refunds']),1)
 
 
 def automatic_delivery_check():

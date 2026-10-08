@@ -38,8 +38,9 @@ python scripts/check_docs.py
 
 Phase 1's foundation gate is complete. Phase 2 adds durable signed simulator
 webhooks, leased read jobs, current payment/reversal/access observations and
-inspection/redrive APIs. Its hosted CI is pending; see [Phase 2](docs/PHASE-2.md).
-Local verification now passes 47 unit tests, 8 Phase 1 and 15 Phase 2 integration
+inspection/redrive APIs. See [Phase 2](docs/PHASE-2.md) and the
+[current hosted checks](https://github.com/void-devourer/ai-payment-operations-agent/actions/workflows/ci.yml).
+Local verification now passes 47 unit tests, 8 Phase 1 and 16 Phase 2 integration
 checks, plus automatic webhook/evidence recovery and the console-outage check.
 The user chose real Stripe credentials later, so that provider gate remains open. The later
 vertical slice detects missing access and verifies a human-approved repair.
