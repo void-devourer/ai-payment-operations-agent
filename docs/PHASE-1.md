@@ -54,6 +54,11 @@ installed in a fresh image; the host dependency consistency check also passed.
 The CI workflow runs the same database/HTTP/outage commands after push; hosted
 success is not claimed until its result is confirmed.
 
+The first hosted run passed both Python unit-check jobs but failed Compose startup
+because its Compose version requires a worker health check for `--wait`. Local
+Compose had accepted the disabled check. A reference-worker heartbeat now makes
+that readiness condition explicit; the corrective hosted run must pass.
+
 ## Scope boundaries
 
 These services implement local API workflows. The operator frontend, durable

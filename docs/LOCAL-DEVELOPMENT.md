@@ -56,6 +56,9 @@ flows; a customer UI and operator console are later frontend work.
 
 Set `POSTGRES_PORT` in `.env` if Windows reserves the default host port. The
 integration scripts use the same setting; no database-volume deletion is needed.
+The reference worker has a heartbeat health check: startup clears a stale marker,
+then the processing loop refreshes it. A missing/stalled heartbeat becomes
+unhealthy. This reports worker progress separately from an individual job's success.
 
 1. Call reference `POST /demo/checkouts` with a unique `purchase_id`, `customer_id`,
    and optionally `fault_mode: pause_fulfillment`. Authenticate using that

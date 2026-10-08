@@ -108,7 +108,11 @@ services:
     <<: *app
     environment: *reference-env
     command: ["python", "-m", "backend.app.reference_worker"]
-    healthcheck: {disable: true}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,time; p='/tmp/reference-worker-heartbeat'; assert os.path.exists(p) and 0 <= time.time()-os.path.getmtime(p) < 30"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
     depends_on:
       reference: {condition: service_healthy}
       simulator: {condition: service_healthy}

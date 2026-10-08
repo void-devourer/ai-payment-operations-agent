@@ -1,6 +1,7 @@
 """Bounded reference-app registration relay and ordinary fulfillment worker."""
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 import time
 from types import SimpleNamespace
 import uuid
@@ -40,13 +41,15 @@ def relay_once(app, workspace: str) -> bool:
     return True
 
 
-def fulfill_once(app, workspace: str) -> bool:
+def fulfill_once(app, workspace: str, progress=None) -> bool:
     database = app.state.database
     with database.transaction(workspace) as cursor:
         cursor.execute("SELECT * FROM orders WHERE fulfillment_state='pending' AND fault_mode='none' ORDER BY purchase_id LIMIT 20")
         orders = cursor.fetchall()
     progressed = False
     for order in orders:
+        if progress is not None:
+            progress()
         try:
             headers = ensure_provider_payment(app, workspace, order)
             response = app.state.http.get(app.state.settings.simulator_url + f"/internal/payments/{order['payment_intent_id']}", headers=headers)
@@ -79,6 +82,8 @@ def fulfill_once(app, workspace: str) -> bool:
 
 
 def main():
+    heartbeat = Path("/tmp/reference-worker-heartbeat")
+    heartbeat.unlink(missing_ok=True)
     settings = Settings.from_env("reference")
     database = Database(settings.database_url)
     with httpx.Client(timeout=5, trust_env=False) as client:
@@ -86,8 +91,10 @@ def main():
         try:
             while True:
                 for workspace in settings.keys:
+                    heartbeat.touch()
                     relay_once(app, workspace)
-                    fulfill_once(app, workspace)
+                    fulfill_once(app, workspace, progress=heartbeat.touch)
+                heartbeat.touch()
                 time.sleep(1)
         finally:
             database.close()
