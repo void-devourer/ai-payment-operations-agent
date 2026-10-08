@@ -19,22 +19,24 @@ separate project and is not implemented in this workspace.
 
 ## Current status
 
-Phase 0 has an executable deterministic policy, 31 passing unit tests, exact
-integration contracts, a discovery guide, an owned backlog, and CI configuration.
-See the [phase report](docs/PHASE-0.md) for evidence and setup gaps. The application,
-database/target integration, genuine Stripe adapter, AI assistant, deployment and
-benchmarks are not built yet. The user need still requires validation.
+Phase 0 established the policy and contracts. Phase 1 now has console, reference
+business app and simulator APIs, PostgreSQL migrations/RLS, sessions, a durable
+registration outbox, and conditional access/receipts. **40 unit tests and 8 real
+PostgreSQL/HTTP tests pass**, together with console-outage recovery. Hosted CI
+results remain to be confirmed. See [Phase 1](docs/PHASE-1.md) and the
+[local setup guide](docs/LOCAL-DEVELOPMENT.md). Genuine Stripe integration, the
+frontend, AI, deployment and benchmarks remain later work; user need is unvalidated.
 
-Run the Phase 0 checks with Python 3.13 or 3.14 from the repository root:
+Run local unit checks with Python 3.13 or 3.14 and the pinned dependencies:
 
 ```powershell
+python -m pip install -r requirements.lock
 python -m unittest discover -s tests/unit -v
 python scripts/check_docs.py
 ```
 
-Next: Phase 1 foundation, tenant isolation, reference business application, and
-simulator. The later vertical slice registers a purchase, observes a successful
-payment, detects missing access, and verifies a human-approved conditional repair.
+Confirm the Phase 1 hosted CI gate before Phase 2 ingestion. The later
+vertical slice detects missing access and verifies a human-approved repair.
 
 Local historical brainstorming and generated credentials/tools are ignored by
 Git. Use the planning documents above for the current scope. This repository is

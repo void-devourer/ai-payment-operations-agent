@@ -1,4 +1,4 @@
-name: Phase 0 contracts
+name: Software checks
 
 on:
   push:
@@ -23,6 +23,34 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Verify policy contracts
-        run: python -m unittest discover -s tests/unit -v
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
+        run: |
+          python -m pip install -r requirements.lock
+          python -m unittest discover -s tests/unit -v
       - name: Verify documentation links and requirement coverage
         run: python scripts/check_docs.py
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+      - name: Install test dependencies and generate local-only secrets
+        run: |
+          python -m pip install -r requirements.lock
+          python scripts/setup_local.py
+      - name: Start independent PostgreSQL-backed services
+        run: docker compose --progress plain up -d --build --quiet-pull --wait --wait-timeout 180
+      - name: Verify database and service contracts
+        run: python scripts/check_phase1.py
+      - name: Verify console outage recovery
+        run: python scripts/check_outage.py
+      - name: Stop local containers
+        if: always()
+        run: docker compose down

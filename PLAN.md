@@ -1,6 +1,6 @@
 # Payment Reliability & Reconciliation Console
 
-Build plan · 2026-10-07 · Phase 0 implementation started; application phases remain open
+Build plan · updated 2026-10-08 · Phase 1 foundation underway; later gates remain open
 
 ## 1. Purpose and project boundaries
 
@@ -175,22 +175,22 @@ Kafka, Kubernetes, or sharding requirement without measured need.
 | Concern | Proposed baseline | Reason |
 | --- | --- | --- |
 | Backend | Python 3.13, FastAPI, Pydantic | Familiar backend foundation with typed request contracts |
-| Database | PostgreSQL 17+, SQLAlchemy 2.x, Alembic | Transactions, constraints, schema migrations, and job coordination |
+| Database | PostgreSQL 17, psycopg2, versioned SQL migrations | Explicit transactions, RLS, constraints and checksum-verified migration jobs |
 | Job execution | Separate worker process using a PostgreSQL jobs table | Durable state without a database/broker dual-write gap |
 | Frontend | React, TypeScript, Vite | A usable operator product with explicit state rendering |
 | Identity | Managed OIDC; server-managed sessions in secure cookies | Avoid creating a password/identity service |
 | Provider SDK | Official Stripe Python SDK behind a provider adapter | Explicit version handling and replaceable fixtures |
 | Local environment | Docker Compose: API, worker, PostgreSQL, reference app | Reproducible development and multi-process failure tests |
-| Tests | pytest, real-PostgreSQL integration tests, Playwright | Verify transaction behavior and operator workflows |
+| Tests | unittest, real-PostgreSQL/HTTP integration scripts, later Playwright | Verify transaction behavior and operator workflows |
 | Quality checks | Ruff, Python type checking, TypeScript checks, formatting | Consistent implementation with small reviewable changes |
 | Observability | Structured logs, metrics, OpenTelemetry-compatible tracing | Correlate requests, jobs, cases, and operations |
 | CI | GitHub Actions once a Git repository/remote exists | Repeatable checks and deployable artifacts |
 | AI | One configurable provider SDK behind an isolated interface | Avoid framework dependence and uncontrolled orchestration |
 
-These are planning choices, not installed dependencies. Resolve compatible stable
-package versions and commit lockfiles during bootstrap. Python/Node/hosting
-compatibility must be checked then. Use the runtime packages already available
-where practical; no paid services are assumed to be provisioned by this plan.
+Python runtime dependencies are now pinned in `requirements.lock`. Phase 1's
+direct-SQL implementation is described in [docs/PHASE-1.md](docs/PHASE-1.md).
+Frontend and hosting choices remain planned; compatibility and their lockfiles
+must be verified in their phases. No paid service is provisioned.
 
 No Redis is required initially. Add caching or an external broker only when a
 benchmark identifies the specific need and the consistency/recovery design is

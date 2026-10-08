@@ -1,6 +1,7 @@
 # Architecture and correctness contracts
 
-Status: proposed design, 2026-10-07. Implementation must satisfy
+Status: architecture contract, updated 2026-10-08; Phase 1 local implementation
+and evidence are in [PHASE-1.md](PHASE-1.md). Later modules remain planned. Implementation must satisfy
 [ACCEPTANCE.md](ACCEPTANCE.md). Provider constraints and their official sources
 are in [RESEARCH.md](RESEARCH.md).
 

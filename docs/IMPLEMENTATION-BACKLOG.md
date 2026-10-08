@@ -12,12 +12,12 @@ Use ordinary commits and pushes; never rewrite shared history to hide a failure.
 
 | Task | Phase | Work and owning module | Acceptance IDs | State |
 | --- | --- | --- | --- | --- |
-| F1-01 | 1 | Packages/lockfiles, config validation, Compose, migrations and CI; `infra`, backend bootstrap | O-01, O-03 | Planned |
-| F1-02 | 1 | Memberships, server sessions, roles, scoped repositories and non-owner RLS; `identity`, persistence | S-01, S-02, S-04 | Planned |
-| F1-03 | 1 | Immutable purchase/attempt registration, product mapping, conflicts and equal-value scenarios; `purchases` | P-01, P-02 | Planned |
-| F1-04 | 1 | Reference checkout, ordinary fulfillment and registration outbox; `reference_app` | P-03 | Planned |
-| F1-05 | 1 | Conditional access writes, target receipts/hash conflicts, receipt lookup; `reference_app`, `business_adapter` | A-04, A-05 | Planned |
-| F1-06 | 1 | Independent simulator state, signed fixtures and controlled faults; `simulation`, `fixtures` | I-01, E-01, E-02, A-06 | Planned |
+| F1-01 | 1 | Packages/lockfiles, config validation, Compose, migrations and CI; `infra`, backend bootstrap | O-01, O-03 | Local gate passed; hosted CI pending |
+| F1-02 | 1 | Memberships, server sessions, roles, scoped repositories and non-owner RLS; `identity`, persistence | S-01, S-02, S-04 | Local identities/sessions/RLS verified; production OIDC remains open |
+| F1-03 | 1 | Immutable purchase/attempt registration, product mapping, conflicts and equal-value scenarios; `purchases` | P-01, P-02 | Reference product/registration gate passed locally |
+| F1-04 | 1 | Reference checkout, ordinary fulfillment and registration outbox; `reference_app` | P-03 | Normal fulfillment and console-outage recovery verified |
+| F1-05 | 1 | Conditional access writes, target receipts/hash conflicts, receipt lookup; `reference_app`, `business_adapter` | A-04, A-05 | Concurrent replay and transactional rollback verified locally |
+| F1-06 | 1 | Independent simulator state, signed fixtures and controlled faults; `simulation`, `fixtures` | I-01, E-01, E-02, A-06 | Completion/pause/signing verified; reversal/network scenarios remain later work |
 | F2-01 | 2 | Raw signed ingress; transactional inbox/job; scoped dedupe and version quarantine; `ingestion` | I-01, I-02, I-03, I-04 | Planned |
 | F2-02 | 2 | Leases/heartbeats/fencing, classified retries/dead jobs, budgets/fairness; `jobs` | J-01, J-02 | Planned |
 | F2-03 | 2 | Current provider/target reads, all-attempt coverage, reversal pagination, provenance/digests and separate completeness; `provider`, `business_adapter` | E-01, E-02, E-03, E-04, E-05 | Planned |
