@@ -39,7 +39,7 @@ class FoundationContractTests(unittest.TestCase):
     def test_config_service_keys_have_only_required_purposes(self):
         with patch.dict(os.environ, self.environment(), clear=True):
             settings = Settings.from_env("console")
-        self.assertEqual(set(settings.keys["ws_a"]), {"registration"})
+        self.assertEqual(set(settings.keys["ws_a"]), {"registration", "provider", "adapter", "webhook"})
 
     def test_service_urls_reject_remote_or_embedded_credentials(self):
         for url in ("http://example.com", "http://user:secret@console", "http://169.254.169.254", "http://console?token=secret"):

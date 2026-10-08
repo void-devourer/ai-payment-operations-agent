@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, timedelta
 import hmac
 import secrets
+import uuid
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from psycopg2.extras import Json
@@ -10,6 +11,7 @@ from psycopg2.extras import Json
 from .contracts import AttemptRegistration, Identifier, PurchaseRegistration
 from .database import digest
 from .security import actor, service_workspace
+from .jobs import enqueue
 
 
 router = APIRouter()
@@ -81,10 +83,15 @@ def register_attempt(purchase_id: Identifier, body: AttemptRegistration, request
         purchase = cursor.fetchone()
         if purchase is None:
             raise HTTPException(409, "Register purchase before its attempt")
-        cursor.execute("INSERT INTO payment_attempts VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING", (workspace, purchase_id, purchase["connection_id"], body.payment_intent_id))
+        cursor.execute("INSERT INTO payment_attempts VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING RETURNING payment_intent_id", (workspace, purchase_id, purchase["connection_id"], body.payment_intent_id))
+        inserted = cursor.fetchone() is not None
         cursor.execute("SELECT purchase_id FROM payment_attempts WHERE workspace_id=%s AND connection_id=%s AND payment_intent_id=%s", (workspace, purchase["connection_id"], body.payment_intent_id))
         if cursor.fetchone()["purchase_id"] != purchase_id:
             raise HTTPException(409, "Attempt already bound to another purchase")
+        if inserted:
+            enqueue(cursor,workspace,purchase["connection_id"],body.payment_intent_id)
+            cursor.execute("""UPDATE evidence_heads SET generation=generation+1,observation_id=NULL
+                WHERE purchase_id=%s""", (purchase_id,))
     return {"registered": True}
 
 
@@ -94,3 +101,64 @@ def list_purchases(workspace: str, request: Request):
     with request.app.state.database.transaction(workspace, subject) as cursor:
         cursor.execute("SELECT payload, registered_at FROM purchases ORDER BY registered_at DESC, purchase_id LIMIT 100")
         return cursor.fetchall()
+
+
+@router.get("/api/workspaces/{workspace}/integration-health")
+def integration_health(workspace: Identifier, request: Request):
+    subject=actor(request,workspace)
+    with request.app.state.database.transaction(workspace,subject) as cursor:
+        cursor.execute("SELECT state,count(*) AS count FROM inbox GROUP BY state")
+        receipts=cursor.fetchall()
+        cursor.execute("SELECT state,count(*) AS count,min(created_at) AS oldest_created_at FROM jobs GROUP BY state")
+        jobs=cursor.fetchall()
+        return {"environment":"simulated","api_version":"simulator.v1","receipts":receipts,"jobs":jobs}
+
+
+@router.get("/api/workspaces/{workspace}/jobs")
+def list_jobs(workspace: Identifier, request: Request, after: Identifier | None=None):
+    subject=actor(request,workspace)
+    with request.app.state.database.transaction(workspace,subject) as cursor:
+        cursor.execute("""SELECT job_id,connection_id,payment_intent_id,state,attempts,due_at,last_error,
+            lease_until,created_at,updated_at FROM jobs WHERE job_id>%s ORDER BY job_id LIMIT 51""", (after or "",))
+        rows=cursor.fetchall()
+        return {"data":rows[:50],"next_cursor":rows[49]["job_id"] if len(rows)>50 else None}
+
+
+@router.post("/api/workspaces/{workspace}/jobs/{job_id}/redrive")
+def redrive(workspace: Identifier, job_id: Identifier, request: Request):
+    subject=actor(request,workspace,write=True)
+    with request.app.state.database.transaction(workspace,subject) as cursor:
+        cursor.execute("SELECT state FROM jobs WHERE job_id=%s FOR UPDATE", (job_id,))
+        row=cursor.fetchone()
+        if row is None:
+            raise HTTPException(404,"Job not found")
+        if row["state"]!="dead":
+            raise HTTPException(409,"Only dead jobs can be redriven")
+        cursor.execute("""UPDATE jobs SET state='queued',attempts=0,due_at=now(),lease_token=NULL,
+            lease_until=NULL,last_error=NULL,updated_at=now() WHERE job_id=%s""", (job_id,))
+        cursor.execute("INSERT INTO job_audit(workspace_id,audit_id,job_id,subject,action) VALUES (%s,%s,%s,%s,'redrive')",
+                       (workspace,uuid.uuid4().hex,job_id,subject))
+    return {"job_id":job_id,"state":"queued"}
+
+
+@router.get("/api/workspaces/{workspace}/purchases/{purchase_id}/evidence")
+def latest_evidence(workspace: Identifier,purchase_id: Identifier,request: Request):
+    subject=actor(request,workspace)
+    with request.app.state.database.transaction(workspace,subject) as cursor:
+        cursor.execute("""SELECT o.* FROM evidence_heads h JOIN observations o
+            ON o.workspace_id=h.workspace_id AND o.observation_id=h.observation_id
+            WHERE h.purchase_id=%s AND o.generation=h.generation""", (purchase_id,))
+        row=cursor.fetchone()
+        if row is None:
+            raise HTTPException(404,"No verified observation available")
+        return row
+
+
+@router.get("/api/workspaces/{workspace}/receipts")
+def list_receipts(workspace: Identifier,request: Request,after: Identifier | None=None):
+    subject=actor(request,workspace)
+    with request.app.state.database.transaction(workspace,subject) as cursor:
+        cursor.execute("""SELECT event_id,event_type,api_version,state,body_digest,received_at,source FROM inbox
+            WHERE event_id>%s ORDER BY event_id LIMIT 51""", (after or "",))
+        rows=cursor.fetchall()
+        return {"data":rows[:50],"next_cursor":rows[49]["event_id"] if len(rows)>50 else None}

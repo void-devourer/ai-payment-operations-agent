@@ -1,7 +1,8 @@
 # Phase 1 foundation and reference application
 
-Updated: 2026-10-08. The local Phase 1 foundation gate passes, including real
-PostgreSQL/HTTP and console-outage checks. Hosted CI result remains to be confirmed.
+Updated: 2026-10-08. The Phase 1 foundation gate passes locally and in
+[hosted CI](https://github.com/void-devourer/ai-payment-operations-agent/actions/runs/37810505482),
+including real PostgreSQL/HTTP and console-outage checks.
 
 ## Implemented foundation
 
@@ -51,13 +52,14 @@ Environment: Windows host Python 3.14.2, Python 3.13 application containers and
 PostgreSQL 17. Host port 55432 was reserved/denied by Windows; using configurable
 port 15432 resolved startup without deleting data. The pinned dependencies
 installed in a fresh image; the host dependency consistency check also passed.
-The CI workflow runs the same database/HTTP/outage commands after push; hosted
-success is not claimed until its result is confirmed.
+The hosted CI workflow passed both Python 3.13/3.14 unit-check jobs and the
+PostgreSQL integration job, including the database/HTTP and outage commands.
 
 The first hosted run passed both Python unit-check jobs but failed Compose startup
 because its Compose version requires a worker health check for `--wait`. Local
 Compose had accepted the disabled check. A reference-worker heartbeat now makes
-that readiness condition explicit; the corrective hosted run must pass.
+that readiness condition explicit; the corrective hosted run passed on commit
+`a91fdeb`.
 
 ## Scope boundaries
 

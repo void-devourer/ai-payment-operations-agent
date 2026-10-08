@@ -1,7 +1,8 @@
 # Architecture and correctness contracts
 
-Status: architecture contract, updated 2026-10-08; Phase 1 local implementation
-and evidence are in [PHASE-1.md](PHASE-1.md). Later modules remain planned. Implementation must satisfy
+Status: architecture contract, updated 2026-10-08; Phase 1 foundation and Phase 2
+simulator ingestion/evidence are documented in [PHASE-1.md](PHASE-1.md) and
+[PHASE-2.md](PHASE-2.md). Stripe integration and later modules remain planned. Implementation must satisfy
 [ACCEPTANCE.md](ACCEPTANCE.md). Provider constraints and their official sources
 are in [RESEARCH.md](RESEARCH.md).
 

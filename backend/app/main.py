@@ -38,6 +38,9 @@ def create_app(service: str | None = None, settings: Settings | None = None):
     else:
         raise ValueError("Unknown service")
     app.include_router(router)
+    if service == "console":
+        from .ingestion import router as ingestion_router
+        app.include_router(ingestion_router)
 
     @app.get("/health/live")
     def live():
@@ -55,6 +58,10 @@ def create_app(service: str | None = None, settings: Settings | None = None):
     @app.exception_handler(psycopg2.IntegrityError)
     def conflict(request, error):
         return JSONResponse({"detail": "Database constraint conflict"}, status_code=409)
+
+    @app.exception_handler(psycopg2.Error)
+    def database_unavailable(request, error):
+        return JSONResponse({"detail": "Database unavailable; delivery remains retryable"}, status_code=503)
 
     @app.exception_handler(httpx.HTTPStatusError)
     @app.exception_handler(httpx.RequestError)

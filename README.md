@@ -22,8 +22,9 @@ separate project and is not implemented in this workspace.
 Phase 0 established the policy and contracts. Phase 1 now has console, reference
 business app and simulator APIs, PostgreSQL migrations/RLS, sessions, a durable
 registration outbox, and conditional access/receipts. **40 unit tests and 8 real
-PostgreSQL/HTTP tests pass**, together with console-outage recovery. Hosted CI
-results remain to be confirmed. See [Phase 1](docs/PHASE-1.md) and the
+PostgreSQL/HTTP tests pass**, together with console-outage recovery.
+[Hosted CI passed](https://github.com/void-devourer/ai-payment-operations-agent/actions/runs/37810505482).
+See [Phase 1](docs/PHASE-1.md) and the
 [local setup guide](docs/LOCAL-DEVELOPMENT.md). Genuine Stripe integration, the
 frontend, AI, deployment and benchmarks remain later work; user need is unvalidated.
 
@@ -35,7 +36,12 @@ python -m unittest discover -s tests/unit -v
 python scripts/check_docs.py
 ```
 
-Confirm the Phase 1 hosted CI gate before Phase 2 ingestion. The later
+Phase 1's foundation gate is complete. Phase 2 adds durable signed simulator
+webhooks, leased read jobs, current payment/reversal/access observations and
+inspection/redrive APIs. Its hosted CI is pending; see [Phase 2](docs/PHASE-2.md).
+Local verification now passes 47 unit tests, 8 Phase 1 and 15 Phase 2 integration
+checks, plus automatic webhook/evidence recovery and the console-outage check.
+The user chose real Stripe credentials later, so that provider gate remains open. The later
 vertical slice detects missing access and verifies a human-approved repair.
 
 Local historical brainstorming and generated credentials/tools are ignored by

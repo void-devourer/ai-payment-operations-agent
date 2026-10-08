@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 SERVICES = {"console", "reference", "simulator"}
 PURPOSES = ("REGISTRATION", "ADAPTER", "PROVIDER", "CHECKOUT", "WEBHOOK")
 REQUIRED = {
-    "console": ("REGISTRATION",),
+    "console": ("REGISTRATION", "PROVIDER", "ADAPTER", "WEBHOOK"),
     "reference": ("REGISTRATION", "ADAPTER", "PROVIDER", "CHECKOUT"),
     "simulator": ("PROVIDER", "WEBHOOK"),
 }
@@ -23,6 +23,7 @@ class Settings:
     console_url: str = "http://console:8000"
     simulator_url: str = "http://simulator:8000"
     session_seconds: int = 3600
+    reference_url: str = "http://reference:8000"
 
     @classmethod
     def from_env(cls, service: str):
@@ -46,10 +47,11 @@ class Settings:
             raise ValueError("Distinct generated development keys of at least 32 characters required")
         console_url = os.environ.get("CONSOLE_URL", "http://console:8000")
         simulator_url = os.environ.get("SIMULATOR_URL", "http://simulator:8000")
-        for value in (console_url, simulator_url):
+        reference_url = os.environ.get("REFERENCE_URL", "http://reference:8000")
+        for value in (console_url, simulator_url, reference_url):
             parsed = urlsplit(value)
             if parsed.scheme != "http" or parsed.hostname not in {
-                "console", "simulator", "localhost", "127.0.0.1"
+                "console", "simulator", "reference", "localhost", "127.0.0.1"
             } or parsed.username or parsed.password or parsed.query or parsed.fragment:
                 raise ValueError("Phase 1 service URLs must use the local deployment allowlist")
-        return cls(service, database_url, login_key, keys, console_url, simulator_url)
+        return cls(service, database_url, login_key, keys, console_url, simulator_url, reference_url=reference_url)

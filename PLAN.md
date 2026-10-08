@@ -302,6 +302,11 @@ PostgreSQL tests run in CI.
   them as valid payment success.
 - Verify the genuine Stripe sandbox path separately from the simulator.
 
+2026-10-08 execution decision: the user chose simulator first and account-managed
+Stripe credentials later. Complete and report the simulator gate independently;
+F2-04 stays open and no genuine-provider proof is claimed. See
+[Phase 2 implementation](docs/PHASE-2.md) for the supported read bounds.
+
 Gate: duplicates and ordering permutations do not corrupt state; failures before
 and after acknowledgement are recoverable. Provider-outage behavior is visible.
 

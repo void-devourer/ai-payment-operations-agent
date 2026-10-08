@@ -45,6 +45,7 @@ class SimulatedPayment(Contract):
     customer_id: Identifier
     amount_minor: Amount
     currency: Currency
+    attempt_id: Identifier | None = None
 
 
 class Grant(Contract):

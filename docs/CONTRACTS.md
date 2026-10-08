@@ -1,8 +1,10 @@
 # Phase 0 contracts
 
 Contract baseline: 2026-10-07. These define the interfaces to implement in later
-phases. Only the pure policy in [policy.py](../backend/app/detection/policy.py)
-is executable today; the HTTP endpoints and persistence below are not built.
+phases. The pure policy in [policy.py](../backend/app/detection/policy.py), Phase 1
+registration/target contracts and Phase 2 simulator ingestion/current-read path
+are executable. Detection integration and console approval/execution remain later
+work; see [Phase 1](PHASE-1.md) and [Phase 2](PHASE-2.md).
 
 ## Supported purchase and exact identities
 
@@ -128,8 +130,10 @@ case deduplication; Phase 4 must enforce one active/uncertain operation in the D
 7. The target conditionally activates access and commits the operation receipt in
    the same target transaction. A fresh access read verifies business recovery.
 
-Steps 1–4 are test fixtures today. Step 5 is implemented. Steps 6–7 are later
-phase gates; no money moves or target changes occur in Phase 0.
+Steps 1–4 are supported on the synthetic Phase 1/2 API path. Step 5 is a tested
+pure policy, with console integration still due in Phase 3. Step 6 and the console
+orchestration around step 7 remain Phase 4 gates. Phase 1 implements the target's
+conditional-write/receipt contract and ordinary fulfillment; no money moves.
 
 ## Target repair and uncertain outcome
 

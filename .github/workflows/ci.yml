@@ -51,6 +51,8 @@ jobs:
         run: python scripts/check_phase1.py
       - name: Verify console outage recovery
         run: python scripts/check_outage.py
+      - name: Verify durable ingestion, evidence and worker recovery
+        run: python scripts/check_phase2.py
       - name: Stop local containers
         if: always()
         run: docker compose down

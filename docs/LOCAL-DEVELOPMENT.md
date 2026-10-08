@@ -17,6 +17,7 @@ python -m pip install -r requirements.lock
 python -m unittest discover -s tests/unit -v
 python scripts/check_phase1.py
 python scripts/check_outage.py
+python scripts/check_phase2.py
 python scripts/check_docs.py
 ```
 
@@ -48,6 +49,8 @@ volume. No volume deletion is required by these verification commands.
 | Reference app API | `http://127.0.0.1:8001/docs` | Checkout, access state, conditional grants, receipts and registration outbox |
 | Simulator API | `http://127.0.0.1:8002/docs` | Independent synthetic payment state and signed event fixtures |
 | Reference worker | Background process | Outbox relay and ordinary fulfillment; no console repair executor |
+| Simulator worker | Background process | Durable signed synthetic webhook delivery |
+| Console worker | Background process | Leased current-evidence reads, retries and fenced publication |
 | PostgreSQL | `127.0.0.1:15432` by default | Three separate databases and three restricted runtime roles |
 
 The first checkout product is `digital_pass`, priced by the reference backend at
@@ -102,4 +105,6 @@ transactional, advisory-locked, and checksum-verified; never edit an applied fil
 This foundation uses direct psycopg2 transactions rather than the initially
 proposed SQLAlchemy/Alembic stack to keep these boundaries explicit and small.
 The application is not ready for production OIDC, Stripe ingestion, subscriptions,
-refund/dispute simulation, performance claims or GenAI. Those retain their phase gates.
+performance claims or GenAI. Those retain their phase gates. Phase 2 implements
+synthetic refund/dispute pagination and controlled provider-read failures; see
+[PHASE-2.md](PHASE-2.md) for bounds, inspection APIs and test behavior.

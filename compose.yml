@@ -30,6 +30,25 @@ x-reference-env: &reference-env
   WORKSPACE_A_CHECKOUT_KEY: ${WORKSPACE_A_CHECKOUT_KEY:?Run scripts/setup_local.py}
   WORKSPACE_B_CHECKOUT_KEY: ${WORKSPACE_B_CHECKOUT_KEY:?Run scripts/setup_local.py}
 
+x-console-env: &console-env
+  <<: [*registration, *provider]
+  APP_ENV: development
+  SERVICE: console
+  DATABASE_URL: postgresql://console_runtime:${CONSOLE_DB_PASSWORD:?Run scripts/setup_local.py}@postgres/console
+  DEMO_LOGIN_KEY: ${DEMO_LOGIN_KEY:?Run scripts/setup_local.py}
+  WORKSPACE_A_ADAPTER_KEY: ${WORKSPACE_A_ADAPTER_KEY:?Run scripts/setup_local.py}
+  WORKSPACE_B_ADAPTER_KEY: ${WORKSPACE_B_ADAPTER_KEY:?Run scripts/setup_local.py}
+  WORKSPACE_A_WEBHOOK_KEY: ${WORKSPACE_A_WEBHOOK_KEY:?Run scripts/setup_local.py}
+  WORKSPACE_B_WEBHOOK_KEY: ${WORKSPACE_B_WEBHOOK_KEY:?Run scripts/setup_local.py}
+
+x-simulator-env: &simulator-env
+  <<: *provider
+  APP_ENV: development
+  SERVICE: simulator
+  DATABASE_URL: postgresql://simulator_runtime:${SIMULATOR_DB_PASSWORD:?Run scripts/setup_local.py}@postgres/simulator
+  WORKSPACE_A_WEBHOOK_KEY: ${WORKSPACE_A_WEBHOOK_KEY:?Run scripts/setup_local.py}
+  WORKSPACE_B_WEBHOOK_KEY: ${WORKSPACE_B_WEBHOOK_KEY:?Run scripts/setup_local.py}
+
 services:
   postgres:
     image: postgres:17
@@ -77,12 +96,7 @@ services:
       postgres: {condition: service_healthy}
   console:
     <<: *app
-    environment:
-      <<: *registration
-      APP_ENV: development
-      SERVICE: console
-      DATABASE_URL: postgresql://console_runtime:${CONSOLE_DB_PASSWORD:?Run scripts/setup_local.py}@postgres/console
-      DEMO_LOGIN_KEY: ${DEMO_LOGIN_KEY:?Run scripts/setup_local.py}
+    environment: *console-env
     ports: ["127.0.0.1:8000:8000"]
     depends_on:
       migrate-console: {condition: service_completed_successfully}
@@ -94,13 +108,7 @@ services:
       migrate-reference: {condition: service_completed_successfully}
   simulator:
     <<: *app
-    environment:
-      <<: *provider
-      APP_ENV: development
-      SERVICE: simulator
-      DATABASE_URL: postgresql://simulator_runtime:${SIMULATOR_DB_PASSWORD:?Run scripts/setup_local.py}@postgres/simulator
-      WORKSPACE_A_WEBHOOK_KEY: ${WORKSPACE_A_WEBHOOK_KEY:?Run scripts/setup_local.py}
-      WORKSPACE_B_WEBHOOK_KEY: ${WORKSPACE_B_WEBHOOK_KEY:?Run scripts/setup_local.py}
+    environment: *simulator-env
     ports: ["127.0.0.1:8002:8000"]
     depends_on:
       migrate-simulator: {condition: service_completed_successfully}
@@ -116,6 +124,31 @@ services:
     depends_on:
       reference: {condition: service_healthy}
       simulator: {condition: service_healthy}
+  console-worker:
+    <<: *app
+    environment: *console-env
+    command: ["python", "-m", "backend.app.console_worker"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,time; p='/tmp/console-worker-heartbeat'; assert os.path.exists(p) and 0 <= time.time()-os.path.getmtime(p) < 60"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      console: {condition: service_healthy}
+      reference: {condition: service_healthy}
+      simulator: {condition: service_healthy}
+  simulator-worker:
+    <<: *app
+    environment: *simulator-env
+    command: ["python", "-m", "backend.app.simulator_worker"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,time; p='/tmp/simulator-worker-heartbeat'; assert os.path.exists(p) and 0 <= time.time()-os.path.getmtime(p) < 30"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    depends_on:
+      simulator: {condition: service_healthy}
+      console: {condition: service_healthy}
 
 volumes:
   postgres-data:
