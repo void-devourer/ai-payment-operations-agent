@@ -43,7 +43,13 @@ class Reader:
                 raise ReadFailure("connection_budget",delay=1)
             time.sleep(.05)
         self.count+=1
-        headers = {"Authorization":"Bearer "+self.app.state.settings.keys[self.job["workspace_id"]][purpose]}
+        if purpose=="stripe":
+            connection=self.app.state.settings.stripe.get(self.job["workspace_id"])
+            if connection is None or base!="https://api.stripe.com" or not path.startswith("/v1/"):
+                raise ReadFailure("stripe_connection_unconfigured",False)
+            headers={"Authorization":"Bearer "+connection.read_key,"Stripe-Version":connection.api_version}
+        else:
+            headers = {"Authorization":"Bearer "+self.app.state.settings.keys[self.job["workspace_id"]][purpose]}
         try:
             remaining=max(.1,min(5,MAX_SECONDS-(time.monotonic()-self.start)))
             with self.app.state.http.stream("GET",base+path,headers=headers,params=params,timeout=remaining) as response:
@@ -152,7 +158,9 @@ def publish(database,job,purchase,attempts,generation,facts,started,finished,err
         lock_owned(cursor,job)
         cursor.execute("""INSERT INTO observations VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (job["workspace_id"],observation_id,purchase["purchase_id"],job["job_id"],generation,Json(facts),
-             hashlib.sha256(canonical.encode()).hexdigest(),started,finished,"simulator_api_and_target","simulator.v1","evidence_v1"))
+             hashlib.sha256(canonical.encode()).hexdigest(),started,finished,
+             "stripe_api_and_target" if facts["scope"]["environment"]=="test" else "simulator_api_and_target",
+             facts.get("api_version","simulator.v1"),"evidence_v1"))
         cursor.execute("UPDATE evidence_heads SET observation_id=%s WHERE purchase_id=%s", (observation_id,purchase["purchase_id"]))
         if error is None:
             finish(cursor,job)
@@ -163,12 +171,22 @@ def collect(app,job):
     purchase,attempts,generation=begin(app.state.database,job)
     settings=app.state.settings
     reader=Reader(app,job)
+    stripe_reader=None
+    if job["connection_id"].startswith("stripe_"):
+        from .stripe_provider import StripeReader
+        connection=settings.stripe.get(job["workspace_id"])
+        if connection is None or job["connection_id"]!=f"stripe_{job['workspace_id']}":
+            raise ReadFailure("stripe_connection_unconfigured",False)
+        stripe_reader=StripeReader(reader,connection)
     started=datetime.now(UTC)
     facts={"scope":{"workspace_id":job["workspace_id"],"connection_id":job["connection_id"],
                     "account_id":f"sim_acct_{job['workspace_id']}","environment":"simulated"},
            "registered_attempts":attempts,"payments":[],"refunds":[],"disputes":[],"access":None,
            "payment_complete":False,"reversal_complete":False,"access_complete":False,"financial_complete":False,
            "errors":[],"windows":{}}
+    if stripe_reader:
+        facts["scope"].update(account_id=connection.account_id,environment="test")
+        facts["api_version"]=connection.api_version
     errors=[]
     for bundle in ("payment","reversal","access"):
         window_start=datetime.now(UTC)
@@ -176,15 +194,23 @@ def collect(app,job):
             if bundle=="payment":
                 if not attempts or len(attempts)>MAX_ATTEMPTS_PER_PURCHASE:
                     raise ReadFailure("attempt_budget",False)
+                if stripe_reader:
+                    stripe_reader.verify_account()
                 for intent in attempts:
-                    facts["payments"].append(current_payment(reader,settings,purchase,intent))
+                    facts["payments"].append(stripe_reader.payment(purchase,intent) if stripe_reader
+                                             else current_payment(reader,settings,purchase,intent))
             elif bundle=="reversal":
                 if not facts["payment_complete"]:
                     raise ReadFailure("payment_incomplete")
                 for payment in facts["payments"]:
                     intent=payment["payment_intent_id"]
-                    for kind in ("refunds","disputes"):
-                        facts[kind].extend(reversals(reader,settings,intent,kind,payment["reversal_generation"]))
+                    if stripe_reader:
+                        refund_rows,dispute_rows=stripe_reader.reversals(payment)
+                        facts["refunds"].extend(refund_rows)
+                        facts["disputes"].extend(dispute_rows)
+                    else:
+                        for kind in ("refunds","disputes"):
+                            facts[kind].extend(reversals(reader,settings,intent,kind,payment["reversal_generation"]))
             else:
                 access=reader.get(settings.reference_url,f"/internal/access/{purchase['purchase_id']}","adapter")
                 require(all(access.get(key)==purchase[key] for key in ("workspace_id","purchase_id","customer_id","product_id"))

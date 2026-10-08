@@ -32,6 +32,9 @@ def main():
     settings=Settings.from_env("console")
     database=Database(settings.database_url)
     try:
+        if settings.stripe:
+            from .stripe_provider import configure_connections
+            configure_connections(database,settings)
         with httpx.Client(timeout=5,trust_env=False) as client:
             app=SimpleNamespace(state=SimpleNamespace(settings=settings,database=database,http=client))
             while True:

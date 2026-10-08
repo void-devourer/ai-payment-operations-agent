@@ -18,6 +18,7 @@ python -m unittest discover -s tests/unit -v
 python scripts/check_phase1.py
 python scripts/check_outage.py
 python scripts/check_phase2.py
+python scripts/check_stripe_contracts.py
 python scripts/check_docs.py
 ```
 
@@ -108,3 +109,5 @@ The application is not ready for production OIDC, Stripe ingestion, subscription
 performance claims or GenAI. Those retain their phase gates. Phase 2 implements
 synthetic refund/dispute pagination and controlled provider-read failures; see
 [PHASE-2.md](PHASE-2.md) for bounds, inspection APIs and test behavior.
+Optional account-managed Stripe setup and the separate genuine verification gate
+are in [STRIPE-SETUP.md](STRIPE-SETUP.md). Base Compose remains simulator-only.

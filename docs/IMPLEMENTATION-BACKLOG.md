@@ -21,7 +21,7 @@ Use ordinary commits and pushes; never rewrite shared history to hide a failure.
 | F2-01 | 2 | Raw signed ingress; transactional inbox/job; scoped dedupe and version quarantine; `ingestion` | I-01, I-02, I-03, I-04 | Simulator path verified locally and in CI; health UI later |
 | F2-02 | 2 | Leases/heartbeats/fencing, classified retries/dead jobs, budgets/fairness; `jobs` | J-01, J-02 | Simulator path verified locally and in CI; broader chaos/benchmarks later |
 | F2-03 | 2 | Current provider/target reads, all-attempt coverage, reversal pagination, provenance/digests and separate completeness; `provider`, `business_adapter` | E-01, E-02, E-03, E-04, E-05 | Bounded simulator path verified locally and in CI |
-| F2-04 | 2 | Small genuine sandbox contract suite and pinned event/API/SDK versions; `provider`, integration tests | I-01, I-04, E-01, E-02, E-05 | Fresh/account-managed credentials and API proof pending |
+| F2-04 | 2 | Small genuine sandbox contract suite and pinned event/API/SDK versions; `provider`, integration tests | I-01, I-04, E-01, E-02, E-05 | Read-only REST adapter, offline contracts and genuine runner implemented; actual Stripe proof blocked on account setup |
 | F3-01 | 3 | Persisted first-success clock; integrate pure policy; explicit unknowns, intentional blocks and reversal review; `detection` | D-01, D-02, D-03, D-05 | Pure contract tested; integration open |
 | F3-02 | 3 | Active-case constraints, concurrent detection, dismissal fingerprints/generations and independent resolution; `cases` | D-04, D-05, A-07 | Planned |
 | F3-03 | 3 | Independent purchase/resource reconciliation, resumable bounded pages, coverage and older sweeps; `reconciliation` | R-01, R-02, R-03 | Planned |

@@ -8,12 +8,33 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from psycopg2.extras import Json
 
-from .contracts import Checkout, Grant, Identifier, PurchaseRegistration, SimulatedPayment
+from .contracts import Checkout, Grant, Identifier, PurchaseRegistration, SimulatedPayment, StripeTestTarget
 from .security import service_workspace
 from .simulator import intent_id
 
 
 router = APIRouter()
+
+
+@router.post("/demo/stripe-targets")
+def stripe_test_target(body: StripeTestTarget,request: Request):
+    """Development-only inactive target; no provider call or simulator registration."""
+    workspace=service_workspace(request,"checkout")
+    payload=body.model_dump(mode="json")
+    with request.app.state.database.transaction(workspace) as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s),hashtext(%s))",(workspace,body.purchase_id))
+        cursor.execute("SELECT payload FROM orders WHERE purchase_id=%s",(body.purchase_id,))
+        old=cursor.fetchone()
+        if old:
+            if old["payload"]!=payload:
+                raise HTTPException(409,"Immutable test target conflict")
+            return {"created":True,"purchase_id":body.purchase_id}
+        cursor.execute("""INSERT INTO orders(workspace_id,purchase_id,customer_id,product_id,payment_intent_id,payload,fault_mode)
+            VALUES (%s,%s,%s,'digital_pass',%s,%s,'pause_fulfillment')""",
+            (workspace,body.purchase_id,body.customer_id,body.payment_intent_id,Json(payload)))
+        cursor.execute("INSERT INTO access_grants(workspace_id,purchase_id,customer_id,product_id) VALUES (%s,%s,%s,'digital_pass')",
+                       (workspace,body.purchase_id,body.customer_id))
+    return {"created":True,"purchase_id":body.purchase_id}
 PRICE_MINOR = 2500
 CURRENCY = "usd"
 
@@ -99,6 +120,8 @@ def pay(purchase_id: Identifier, request: Request):
         order = cursor.fetchone()
     if order is None:
         raise HTTPException(404, "Checkout not found")
+    if order["payment_intent_id"].startswith("pi_"):
+        raise HTTPException(409,"Stripe test targets are not simulator checkouts")
     headers = ensure_provider_payment(request.app, workspace, order)
     response = request.app.state.http.post(request.app.state.settings.simulator_url + f"/internal/payments/{order['payment_intent_id']}/confirm", headers=headers)
     response.raise_for_status()

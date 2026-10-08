@@ -19,6 +19,13 @@ def create_app(service: str | None = None, settings: Settings | None = None):
     async def lifespan(app):
         config = settings or Settings.from_env(service)
         database = Database(config.database_url)
+        if config.stripe:
+            from .stripe_provider import configure_connections
+            try:
+                configure_connections(database,config)
+            except Exception:
+                database.close()
+                raise
         app.state.settings = config
         app.state.database = database
         with httpx.Client(timeout=5, trust_env=False) as client:

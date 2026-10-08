@@ -64,7 +64,10 @@ def workspaces(request: Request):
 @router.post("/api/purchases")
 def register_purchase(body: PurchaseRegistration, request: Request):
     workspace = service_workspace(request, "registration")
-    if body.workspace_id != workspace or body.connection_id != f"sim_{workspace}":
+    allowed_connections={f"sim_{workspace}"}
+    if workspace in request.app.state.settings.stripe:
+        allowed_connections.add(f"stripe_{workspace}")
+    if body.workspace_id != workspace or body.connection_id not in allowed_connections:
         raise HTTPException(403, "Connection/workspace mismatch")
     payload = body.model_dump(mode="json")
     with request.app.state.database.transaction(workspace) as cursor:
@@ -111,7 +114,8 @@ def integration_health(workspace: Identifier, request: Request):
         receipts=cursor.fetchall()
         cursor.execute("SELECT state,count(*) AS count,min(created_at) AS oldest_created_at FROM jobs GROUP BY state")
         jobs=cursor.fetchall()
-        return {"environment":"simulated","api_version":"simulator.v1","receipts":receipts,"jobs":jobs}
+        cursor.execute("SELECT connection_id,account_id,environment,api_version,provider FROM connections ORDER BY connection_id")
+        return {"connections":cursor.fetchall(),"receipts":receipts,"jobs":jobs}
 
 
 @router.get("/api/workspaces/{workspace}/jobs")

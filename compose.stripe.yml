@@ -1,0 +1,7 @@
+# Optional account-managed test integration. Base simulator startup is unchanged.
+# .env.stripe is ignored and is never copied into application images.
+services:
+  console:
+    env_file: [.env.stripe]
+  console-worker:
+    env_file: [.env.stripe]

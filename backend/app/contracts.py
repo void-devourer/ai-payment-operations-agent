@@ -48,6 +48,12 @@ class SimulatedPayment(Contract):
     attempt_id: Identifier | None = None
 
 
+class StripeTestTarget(Contract):
+    purchase_id: Identifier
+    customer_id: Identifier
+    payment_intent_id: Annotated[str,Field(strict=True,pattern=r"^pi_[A-Za-z0-9]{1,100}$")]
+
+
 class Grant(Contract):
     contract_version: Literal["access_grant_v1"] = "access_grant_v1"
     operation_id: Identifier

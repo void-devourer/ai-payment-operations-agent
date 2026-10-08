@@ -42,7 +42,9 @@ inspection/redrive APIs. See [Phase 2](docs/PHASE-2.md) and the
 [current hosted checks](https://github.com/void-devourer/ai-payment-operations-agent/actions/workflows/ci.yml).
 Local verification now passes 47 unit tests, 8 Phase 1 and 16 Phase 2 integration
 checks, plus automatic webhook/evidence recovery and the console-outage check.
-The user chose real Stripe credentials later, so that provider gate remains open. The later
+The optional Stripe adapter and genuine test runner are now implemented; see
+[Stripe setup](docs/STRIPE-SETUP.md). Genuine verification remains blocked on
+account creation and credentials. Offline Stripe fixtures do not close that gate. The later
 vertical slice detects missing access and verifies a human-approved repair.
 
 Local historical brainstorming and generated credentials/tools are ignored by

@@ -36,7 +36,7 @@ def verify_signature(raw, header, secret, now=None):
         raise ValueError("invalid_signature")
 
 
-def parse_event(raw, workspace):
+def decode_json(raw):
     def unique_object(pairs):
         result = {}
         for key,value in pairs:
@@ -44,8 +44,12 @@ def parse_event(raw, workspace):
                 raise ValueError("duplicate_json_key")
             result[key]=value
         return result
-    event = json.loads(raw,object_pairs_hook=unique_object,
+    return json.loads(raw,object_pairs_hook=unique_object,
                        parse_constant=lambda value: (_ for _ in ()).throw(ValueError("invalid_json")))
+
+
+def parse_event(raw, workspace):
+    event=decode_json(raw)
     if not isinstance(event,dict) or event.get("object")!="event":
         raise ValueError("invalid_envelope")
     identifier.validate_python(event.get("id"))
@@ -103,4 +107,27 @@ async def receive(destination: Identifier, request: Request):
         event,state,intent = parse_event(bytes(raw),workspace)
     except (ValueError,TypeError,AttributeError,ValidationError,RecursionError):
         raise HTTPException(400,"Invalid signed event") from None
+    return await run_in_threadpool(persist_receipt,request.app.state.database,workspace,destination,bytes(raw),event,state,intent)
+
+
+@router.post("/webhooks/stripe/{destination}")
+async def receive_stripe(destination: Identifier,request: Request):
+    settings=request.app.state.settings
+    workspace=next((ws for ws in settings.stripe if destination==f"stripe_{ws}"),None)
+    if workspace is None:
+        raise HTTPException(404,"Stripe destination not configured")
+    if request.headers.get("content-encoding","identity")!="identity":
+        raise HTTPException(415,"Encoded bodies unsupported")
+    raw=bytearray()
+    async for chunk in request.stream():
+        raw.extend(chunk)
+        if len(raw)>MAX_BODY:
+            raise HTTPException(413,"Body limit exceeded")
+    try:
+        from .stripe_provider import parse_stripe_event
+        connection=settings.stripe[workspace]
+        verify_signature(bytes(raw),request.headers.get("Stripe-Signature",""),connection.webhook_secret)
+        event,state,intent=parse_stripe_event(bytes(raw),connection)
+    except (ValueError,TypeError,AttributeError,ValidationError,RecursionError):
+        raise HTTPException(400,"Invalid signed Stripe event") from None
     return await run_in_threadpool(persist_receipt,request.app.state.database,workspace,destination,bytes(raw),event,state,intent)
