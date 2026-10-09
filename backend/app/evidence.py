@@ -162,6 +162,8 @@ def publish(database,job,purchase,attempts,generation,facts,started,finished,err
              "stripe_api_and_target" if facts["scope"]["environment"]=="test" else "simulator_api_and_target",
              facts.get("api_version","simulator.v1"),"evidence_v1"))
         cursor.execute("UPDATE evidence_heads SET observation_id=%s WHERE purchase_id=%s", (observation_id,purchase["purchase_id"]))
+        from .detection.projection import apply_observation
+        apply_observation(cursor,purchase,attempts,observation_id,facts,finished)
         if error is None:
             finish(cursor,job)
     return observation_id

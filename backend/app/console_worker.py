@@ -11,6 +11,7 @@ from .config import Settings
 from .database import Database
 from .evidence import collect
 from .jobs import ReadFailure, claim, fail
+from .reconciliation import schedule_page
 
 
 def run_one(app,workspace):
@@ -37,10 +38,17 @@ def main():
             configure_connections(database,settings)
         with httpx.Client(timeout=5,trust_env=False) as client:
             app=SimpleNamespace(state=SimpleNamespace(settings=settings,database=database,http=client))
+            next_scan=0
             while True:
                 for workspace in settings.keys:
                     marker.touch()
+                    if time.monotonic()>=next_scan:
+                        connections=[f'sim_{workspace}']+([f'stripe_{workspace}'] if workspace in settings.stripe else [])
+                        for connection_id in connections:
+                            schedule_page(database,workspace,connection_id)
                     run_one(app,workspace)
+                if time.monotonic()>=next_scan:
+                    next_scan=time.monotonic()+1
                 marker.touch()
                 time.sleep(.25)
     finally:

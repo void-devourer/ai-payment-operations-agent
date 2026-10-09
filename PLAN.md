@@ -333,6 +333,13 @@ and after acknowledgement are recoverable. Provider-outage behavior is visible.
 Gate: a missing event and an acknowledged-but-unprocessed event are both found;
 delayed payments and intentional suspension do not trigger an eligible grant.
 
+2026-10-09 execution: this simulator gate passed. The shipped console investigates
+registered purchases, with resumable all-age current-resource sweeps and explicit
+read coverage. Unregistered provider-inventory backfill and expired-event-history
+reconstruction are unsupported, rather than represented as complete coverage.
+See [Phase 3 implementation and verification](docs/PHASE-3.md). Approval/execution
+is still Phase 4, and release accessibility/security/chaos checks remain Phase 5.
+
 ### Phase 4 — Approval and repair recovery
 
 - Create immutable proposals, payload-bound approvals, stable operation identities,

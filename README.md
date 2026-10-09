@@ -26,7 +26,7 @@ PostgreSQL/HTTP tests pass**, together with console-outage recovery.
 [Hosted CI passed](https://github.com/void-devourer/ai-payment-operations-agent/actions/runs/37810505482).
 See [Phase 1](docs/PHASE-1.md) and the
 [local setup guide](docs/LOCAL-DEVELOPMENT.md). Full Stripe acceptance, the
-frontend, AI, deployment and benchmarks remain later work; user need is unvalidated.
+approval/repair execution, AI, deployment and benchmarks remain later work; user need is unvalidated.
 
 Run local unit checks with Python 3.13 or 3.14 and the pinned dependencies:
 
@@ -49,6 +49,13 @@ Full adapter acceptance remains open because the temporary key denies account
 and dispute reads. The simulator needs no Stripe credentials and survives sandbox
 expiry. Offline fixtures and this limited smoke result do not close that gate. The later
 vertical slice detects missing access and verifies a human-approved repair.
+
+Phase 3 now persists grace clocks and deterministic evaluations, detects cases,
+reconciles registered purchases independently of events, and serves the React case
+console at **http://127.0.0.1:8000**. Local checks pass 72 unit contracts and 10 real
+Phase 3 PostgreSQL/HTTP scenarios, plus the frontend production build and a browser
+walkthrough. See [Phase 3](docs/PHASE-3.md) for supported coverage and limits.
+Approval and repair execution are Phase 4.
 
 Local historical brainstorming and generated credentials/tools are ignored by
 Git. Use the planning documents above for the current scope. This repository is

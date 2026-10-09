@@ -111,3 +111,9 @@ synthetic refund/dispute pagination and controlled provider-read failures; see
 [PHASE-2.md](PHASE-2.md) for bounds, inspection APIs and test behavior.
 Optional account-managed Stripe setup and the separate genuine verification gate
 are in [STRIPE-SETUP.md](STRIPE-SETUP.md). Base Compose remains simulator-only.
+
+Phase 3's React console is served by the console API at http://127.0.0.1:8000.
+Sign in with a local fixture identity and the private generated `DEMO_LOGIN_KEY`.
+Detection, resumable independent purchase sweeps, case investigation/disposition
+and verification instructions are in [PHASE-3.md](PHASE-3.md). Rebuild with Compose
+after frontend changes, or run the Vite dev server from `frontend` with `npm run dev`.

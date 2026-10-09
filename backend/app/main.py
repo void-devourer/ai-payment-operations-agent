@@ -2,9 +2,11 @@
 
 from contextlib import asynccontextmanager
 import os
+from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse,JSONResponse
+from fastapi.staticfiles import StaticFiles
 import httpx
 import psycopg2
 
@@ -48,6 +50,24 @@ def create_app(service: str | None = None, settings: Settings | None = None):
     if service == "console":
         from .ingestion import router as ingestion_router
         app.include_router(ingestion_router)
+        from .cases import router as cases_router
+        app.include_router(cases_router)
+        frontend=Path(__file__).resolve().parents[2]/'frontend/dist'
+        if frontend.exists():
+            app.mount('/assets',StaticFiles(directory=frontend/'assets'),name='assets')
+
+            @app.get('/',include_in_schema=False)
+            def index():
+                return FileResponse(frontend/'index.html',headers={'Cache-Control':'no-store'})
+
+        @app.middleware('http')
+        async def private_responses(request,call_next):
+            response=await call_next(request)
+            if request.url.path.startswith(('/api/','/dev/')):
+                response.headers['Cache-Control']='no-store'
+            response.headers['X-Content-Type-Options']='nosniff'
+            response.headers['Referrer-Policy']='no-referrer'
+            return response
 
     @app.get("/health/live")
     def live():
