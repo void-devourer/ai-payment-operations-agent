@@ -45,7 +45,16 @@ class Probe:
             headers['Idempotency-Key']='payment-console-check-'+uuid.uuid4().hex
         response=self.client.request(method,API_BASE+path,data=data,params=params,headers=headers)
         if response.status_code>=400:
-            raise ReadFailure('stripe_acceptance_http_'+str(response.status_code),False)
+            code='stripe_acceptance_http_'+str(response.status_code)
+            try:
+                error=response.json().get('error',{})
+                for field in ('code','param'):
+                    value=error.get(field)
+                    if isinstance(value,str) and re.fullmatch(r'[a-z_]{1,64}',value):
+                        code+='_'+field+'_'+value
+            except (ValueError,AttributeError):
+                pass
+            raise ReadFailure(code,False)
         if len(response.content)>1024*1024:
             raise ReadFailure('acceptance_response_budget',False)
         return response.json()
@@ -94,7 +103,8 @@ def main():
             registration_headers={'Authorization':'Bearer '+local['WORKSPACE_A_REGISTRATION_KEY']}
             client.post('http://127.0.0.1:8000/api/purchases',json=registration,headers=registration_headers).raise_for_status()
             data={'amount':'2500','currency':'usd','customer':customer,'payment_method':'pm_card_visa',
-                  'payment_method_types[]':'card','confirm':'true','metadata[purchase_id]':purchase_id}
+                  'automatic_payment_methods[enabled]':'true','automatic_payment_methods[allow_redirects]':'never',
+                  'confirm':'true','metadata[purchase_id]':purchase_id}
             intent=writer.request('POST','/v1/payment_intents',data=data)
             if intent.get('livemode') is not False or intent.get('status')!='succeeded':
                 raise ValueError('Synthetic payment did not reach a test-mode success')

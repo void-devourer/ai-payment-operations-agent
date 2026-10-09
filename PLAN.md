@@ -307,6 +307,14 @@ Stripe credentials later. Complete and report the simulator gate independently;
 F2-04 stays open and no genuine-provider proof is claimed. See
 [Phase 2 implementation](docs/PHASE-2.md) for the supported read bounds.
 
+2026-10-09 adjustment: the user authorized a fresh temporary Stripe sandbox for
+isolated genuine verification, then Phase 3. The smoke test passed for payments,
+refunds, manual capture and signed webhooks. Temporary keys deny account/dispute
+reads, so full F2-04 acceptance remains open; do not bypass those completeness
+checks. The runner never enables the console adapter or touches application DBs.
+Continue Phase 3 on the credential-independent simulator; account-managed proof
+can be completed when access becomes available. See [Stripe setup](docs/STRIPE-SETUP.md).
+
 Gate: duplicates and ordering permutations do not corrupt state; failures before
 and after acknowledgement are recoverable. Provider-outage behavior is visible.
 

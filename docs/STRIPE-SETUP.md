@@ -1,10 +1,42 @@
 # Account-managed Stripe test integration
 
-Updated 2026-10-08. The adapter and local contract suite are implemented. Genuine
-Stripe verification is blocked: the user has no Stripe account, no account-managed
-test credentials are configured, and the Dashboard navigation attempt timed out.
-The previous anonymous sandbox/profile is not used and no new temporary sandbox
-was provisioned. This document does not claim a genuine Stripe test passed.
+Updated 2026-10-09. The account-managed adapter and local contracts are implemented.
+A separate genuine temporary-sandbox smoke test passed. Full adapter acceptance
+remains open: the temporary key cannot read account identity or disputes. The user
+has no account-managed sandbox and Stripe India registration requires an invitation.
+
+## Temporary verification result and isolation
+
+With the user's authorization, a fresh anonymous CLI sandbox was provisioned using
+the previously approved Git author email. It expires on **2026-10-16**. The old
+anonymous profile was not reused. Secrets/profile/listener output remain ignored.
+
+`scripts/check_stripe_temporary.py --create-fixtures` passed against genuine Stripe:
+successful test payment, independent current Charge/Refund reads after partial and
+full refunds (PaymentIntent stays succeeded), manual capture with zero received
+amount, and seven genuine signed webhook deliveries at `2026-09-30.endive`; none
+were rejected. The sanitized local report is `.local/stripe-temporary-verification.json`.
+This smoke test does not establish complete reversal coverage or runtime evidence
+integration: `/v1/account` and `/v1/disputes` both returned HTTP 403.
+
+The runner accepts only a fresh `rkcs_test_` profile, checks expiry, binds a temporary
+loopback receiver on port 8010, verifies raw-body signatures and event scope/version
+using the application's ingress functions, and stops its listener/receiver on exit.
+It never configures the console, writes either application database, or changes
+`.env.stripe`. The permanent simulator stack therefore needs no Stripe credentials
+and continues working after the sandbox expires. Full account-managed acceptance
+below remains a separate gate; partial verification is not a reason to weaken it.
+
+To reproduce, install the local Stripe CLI, create a fresh profile under ignored
+`.local/stripe-verification-profile.toml` using `stripe sandbox create --config ...`,
+and capture its output privately (it contains credentials/claim links). Then run:
+
+```powershell
+python scripts/check_stripe_temporary.py --create-fixtures
+```
+
+Synthetic Stripe fixtures are retained; no live money is used. This opt-in test is
+excluded from CI and creates no persistent dependency on the temporary sandbox.
 
 ## Implemented boundary
 
@@ -102,6 +134,7 @@ labels fixture signatures as genuine Stripe delivery.
 Local checks passed: 63 unit tests, four PostgreSQL-backed offline Stripe contracts,
 and the existing Phase 1/2 regressions. Hosted CI runs the offline suites only;
 genuine account-managed acceptance is still blocked on the account step above.
+The temporary smoke result is additional, limited evidence, not that acceptance.
 
 ## Primary sources
 

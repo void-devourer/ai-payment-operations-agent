@@ -25,7 +25,7 @@ registration outbox, and conditional access/receipts. **40 unit tests and 8 real
 PostgreSQL/HTTP tests pass**, together with console-outage recovery.
 [Hosted CI passed](https://github.com/void-devourer/ai-payment-operations-agent/actions/runs/37810505482).
 See [Phase 1](docs/PHASE-1.md) and the
-[local setup guide](docs/LOCAL-DEVELOPMENT.md). Genuine Stripe integration, the
+[local setup guide](docs/LOCAL-DEVELOPMENT.md). Full Stripe acceptance, the
 frontend, AI, deployment and benchmarks remain later work; user need is unvalidated.
 
 Run local unit checks with Python 3.13 or 3.14 and the pinned dependencies:
@@ -40,11 +40,14 @@ Phase 1's foundation gate is complete. Phase 2 adds durable signed simulator
 webhooks, leased read jobs, current payment/reversal/access observations and
 inspection/redrive APIs. See [Phase 2](docs/PHASE-2.md) and the
 [current hosted checks](https://github.com/void-devourer/ai-payment-operations-agent/actions/workflows/ci.yml).
-Local verification now passes 47 unit tests, 8 Phase 1 and 16 Phase 2 integration
+Local verification now passes 65 unit tests, 8 Phase 1 and 16 Phase 2 integration
 checks, plus automatic webhook/evidence recovery and the console-outage check.
 The optional Stripe adapter and genuine test runner are now implemented; see
-[Stripe setup](docs/STRIPE-SETUP.md). Genuine verification remains blocked on
-account creation and credentials. Offline Stripe fixtures do not close that gate. The later
+[Stripe setup](docs/STRIPE-SETUP.md). A genuine isolated temporary-sandbox smoke
+test passed on October 9: payments, refunds, manual capture and signed webhooks.
+Full adapter acceptance remains open because the temporary key denies account
+and dispute reads. The simulator needs no Stripe credentials and survives sandbox
+expiry. Offline fixtures and this limited smoke result do not close that gate. The later
 vertical slice detects missing access and verifies a human-approved repair.
 
 Local historical brainstorming and generated credentials/tools are ignored by
