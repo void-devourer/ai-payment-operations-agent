@@ -5,6 +5,7 @@ owner still reviews the exact repair payload in the console.
 """
 import argparse
 import json
+import re
 from pathlib import Path
 import sys
 import uuid
@@ -37,16 +38,33 @@ def seed(client, env, letter='A', scenario='missing-access'):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--scenario', choices=['normal', 'missing-access', 'provider-outage'], default='missing-access')
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument('--scenario', choices=['normal', 'missing-access', 'provider-outage'], default='missing-access')
+    action.add_argument('--clear-fault', metavar='SIMULATED_INTENT_ID', help='Clear a simulator read/page fault without changing payment status')
     parser.add_argument('--workspace', choices=['A', 'B'], default='A')
     args = parser.parse_args()
+    if args.clear_fault and not re.fullmatch(r'sim_pi_[a-f0-9]{32}', args.clear_fault):
+        parser.error('Use the printed simulator payment intent ID')
     with httpx.Client(timeout=10, trust_env=False) as client:
-        result = seed(client, local_environment(), args.workspace, args.scenario)
+        env = local_environment()
+        if args.clear_fault:
+            client.post(f'http://127.0.0.1:8002/internal/payments/{args.clear_fault}/scenario',
+                        json={'read_fault': 0, 'page_fault': False},
+                        headers={'Authorization': 'Bearer ' + env[f'WORKSPACE_{args.workspace}_PROVIDER_KEY']}).raise_for_status()
+            print('Simulator fault cleared. Wait for retry, or redrive the job if it is dead.')
+            return
+        result = seed(client, env, args.workspace, args.scenario)
     directory = ROOT / '.local'
     directory.mkdir(exist_ok=True)
     (directory / 'demo-latest.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(result, indent=2))
-    print('Open http://127.0.0.1:8000. Missing access becomes a case after the real 120-second grace and the next evidence read.')
+    print('Open http://127.0.0.1:8000.')
+    if args.scenario == 'missing-access':
+        print('Missing access becomes a case after the real 120-second grace and the next evidence read.')
+    elif args.scenario == 'normal':
+        print('The independent reference worker should activate access without a console repair.')
+    else:
+        print('Provider reads return 503; incomplete evidence must not authorize a repair.')
     print('Local login key stays in .env; no approval is performed by this script.')
 
 

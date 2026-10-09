@@ -1,0 +1,33 @@
+{
+  "run_id": "bench_f5eb1feb259e483b92a522238ec5980c",
+  "started_at": "2026-10-09T17:35:35.667117+00:00",
+  "host_os": "Windows-11-10.0.26300-SP0",
+  "host_logical_cpus": 16,
+  "load_client_python": "3.14.2",
+  "requested_rps": 100,
+  "duration_seconds": 30,
+  "concurrency_limit": 16,
+  "elapsed_seconds": 30.03,
+  "sent": 3000,
+  "skipped_slots": 0,
+  "status_counts": {
+    "200": 3000
+  },
+  "acknowledged": 3000,
+  "durable_receipts": 3000,
+  "durability_count_matches": true,
+  "latency_ms": {
+    "p50": 6.69,
+    "p95": 8.67,
+    "p99": 19.05
+  },
+  "workspace_p95_ms": {
+    "A": 8.67,
+    "B": 8.69
+  },
+  "oldest_active_job_age_seconds_at_end": {
+    "ws_a": 42.07,
+    "ws_b": 30.01
+  },
+  "scope": "Two purchases; unique signed notifications; 90/10 tenant traffic; localhost; job coalescing"
+}

@@ -50,15 +50,59 @@ No running database or persistent volume was replaced.
 
 ## Benchmark record
 
-Measured results are recorded after running the sustained and burst commands in
-the [release runbook](RELEASE-RUNBOOK.md). Raw outputs remain in ignored local
-artifacts; the workload and measured summary will be reported here.
+Measured on Windows 11, AMD Ryzen 7 7435HS (8 cores / 16 logical CPUs),
+25,439,199,232 bytes physical RAM. Docker Desktop engine 29.8.2 had 16 CPUs and
+12,377,022,464 bytes available; the release override limited PostgreSQL to two
+CPUs / 512 MiB and each API/worker to one CPU / 256 MiB. PostgreSQL was 17.11;
+the host load client used Python 3.14.2, concurrency 16, localhost HTTP and a
+90% A / 10% B traffic split. One instance of each worker ran throughout.
+
+The preserved local database already contained 259 workspace-A and 15 workspace-B
+purchases, plus four isolated test-registration fixtures. Each benchmark adds
+two purchases; it sends unique notifications repeatedly about those purchases.
+Historical controlled-fault jobs and periodic reconciliation remained enabled.
+The two tests ran sequentially without pausing/restarting services during load.
+
+| Measurement | Sustained | Burst |
+| --- | --- | --- |
+| Requested load | 25 requests/sec for 600 sec | 100 requests/sec for 30 sec |
+| Sent / HTTP 200 / durable receipts | 15,000 / 15,000 / 15,000 | 3,000 / 3,000 / 3,000 |
+| Skipped load-generator slots | 0 | 0 |
+| Elapsed time | 599.98 sec | 30.03 sec |
+| p50 / p95 / p99 acknowledgment | 10.16 / 22.56 / 24.69 ms | 6.69 / 8.67 / 19.05 ms |
+| Workspace A / B p95 | 22.55 / 22.63 ms | 8.67 / 8.69 ms |
+| Oldest active job creation age A / B at end | 599.97 / 599.99 sec | 42.07 / 30.01 sec |
+
+The proposed ingress p95 <300 ms target passed for this workload. A coalesced
+job retains its original creation time while repeated requests keep it active;
+the age snapshot is **not** the wait for its most recent trigger or a dispatch
+fairness proof. A later post-load check found current published evidence heads
+for all four benchmark purchases, but maximum latest-observation age was 99.51
+seconds for workspace A and 41.70 seconds for B. This does **not** establish
+60-second freshness across the populated workspace. Rate budgets, backlog,
+tenant inventory size and worker scheduling need a separate end-to-end benchmark.
+
+Tracked exact summaries: [sustained](benchmarks/sustained-25-rps.json) and
+[burst](benchmarks/burst-100-rps.json). Per-request timing arrays stay in
+`.local/benchmarks`. Commands and limitations are in the
+[release runbook](RELEASE-RUNBOOK.md).
+After both runs, the console worker was restarted. All 18,000 benchmark receipts
+remained stored (15,000 sustained / 3,000 burst), and every long-running service
+returned healthy. This verifies receipt retention across worker restart, not a
+database crash or a time-bounded recovery SLA.
+
+The implementation commit's [hosted CI run](https://github.com/void-devourer/ai-payment-operations-agent/actions/runs/37966686519)
+passed all policy, prior integration and release checks. Browser verification
+confirmed the built console/Integration health page renders with the CSP and no
+browser error/warning logs; the frontend type check/build passed locally.
 
 ## Remaining release gates
 
 - The intended 10-workspace / 5,000-purchase / 20,000-mixed-event inventory and
   dispatch-fairness benchmark is not implemented. The current fixed two-workspace
   hot-key ingress workload cannot establish that capacity.
+- A 60-second evidence-freshness or abandoned-lease recovery bound is not proved
+  by the ingress timing results. Controlled crash recovery is separately tested.
 - Broader accessibility audit, production identity/TLS/quotas, coordinated restore
   evidence and an operational retention/export policy remain separate work.
 - Arbitrary free-text audit reasons and raw event backups are not automatically

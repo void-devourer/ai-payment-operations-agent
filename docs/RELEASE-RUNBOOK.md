@@ -46,7 +46,7 @@ Other lab scenarios:
 | Command / fault | Expected result | Clear / verify |
 | --- | --- | --- |
 | `python scripts/demo.py --scenario normal` | Independent ordinary fulfillment activates access | Inspect the reference access and console evidence |
-| `python scripts/demo.py --scenario provider-outage` | Synthetic provider returns 503; evidence remains incomplete and no repair is eligible | Use the credentialed simulator scenario contract with `read_fault: 0`; wait for retry or redrive a dead job |
+| `python scripts/demo.py --scenario provider-outage` | Synthetic provider returns 503; evidence remains incomplete and no repair is eligible | Run `python scripts/demo.py --clear-fault SIMULATED_INTENT_ID`; wait for retry or redrive a dead job |
 | Unsigned, conflicting or unsupported event | Rejected or durably quarantined, never trusted payment evidence | Ingestion integration suite |
 | Refund, dispute, suspension, changed revision | Repair blocked or sent to review | Detection and repair integration suites |
 | Process death after target commit | Same operation receipt lookup; no second dispatch | Repair integration suite's actual child-process crash |
