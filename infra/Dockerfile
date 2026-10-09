@@ -16,4 +16,4 @@ COPY tests tests
 COPY --from=frontend /frontend/dist /app/frontend/dist
 RUN useradd --uid 10001 --create-home app
 USER app
-CMD ["uvicorn", "backend.app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "backend.app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

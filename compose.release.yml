@@ -1,0 +1,36 @@
+# Local resource-limited synthetic demo; combine with compose.yml.
+# Ports remain loopback-only and no Stripe credentials are configured.
+services:
+  postgres:
+    cpus: 2.0
+    mem_limit: 512m
+  console:
+    cpus: 1.0
+    mem_limit: 256m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  reference:
+    cpus: 1.0
+    mem_limit: 256m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  simulator:
+    cpus: 1.0
+    mem_limit: 256m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  console-worker:
+    cpus: 1.0
+    mem_limit: 256m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  reference-worker:
+    cpus: 1.0
+    mem_limit: 256m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+  simulator-worker:
+    cpus: 1.0
+    mem_limit: 256m
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]

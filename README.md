@@ -50,8 +50,10 @@ remains open because the temporary key denies account and dispute reads. See
 [Stripe setup](docs/STRIPE-SETUP.md). Offline fixtures and that limited smoke result
 do not close the genuine-provider gate.
 
-Phase 5 release security, accessibility, deployment, restore and performance gates
-remain open. AI is a later read-only evaluated extension. User need is unvalidated;
+Phase 5 adds safe validation/logging, a recovery execution pause, isolated backup
+restore checks, and a reproducible resource-limited local demo. See the
+[release runbook](docs/RELEASE-RUNBOOK.md) and [verification record](docs/PHASE-5.md).
+The broader release gate remains open. AI is a later read-only evaluated extension. User need is unvalidated;
 local fixture identities are not production authentication.
 
 Local historical brainstorming and generated credentials/tools are ignored by

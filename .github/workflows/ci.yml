@@ -59,6 +59,8 @@ jobs:
         run: python scripts/check_phase3.py
       - name: Verify approval, access repair and unknown-outcome recovery
         run: python scripts/check_phase4.py
+      - name: Verify release security, previous schema and isolated restore
+        run: python scripts/check_phase5.py
       - name: Stop local containers
         if: always()
         run: docker compose down

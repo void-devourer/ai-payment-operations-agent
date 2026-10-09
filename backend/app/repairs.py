@@ -28,6 +28,12 @@ ACTIVE = ('queued', 'executing', 'verifying', 'outcome_unknown')
 MAX_ATTEMPTS = 8
 
 
+def execution_enabled(cursor):
+    cursor.execute('SELECT enabled FROM execution_control WHERE singleton=true')
+    row = cursor.fetchone()
+    return row is not None and row['enabled']
+
+
 class ProposalDecision(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
     payload_digest: str = Field(pattern=r'^[a-f0-9]{64}$')
@@ -160,6 +166,8 @@ def decide(workspace: Identifier, proposal_id: Identifier, body: ProposalDecisio
             raise HTTPException(409, 'Proposal expired or superseded')
         if body.decision == 'approve' and (not eligible(case) or proposal['fingerprint'] != case['fingerprint'] or has_active(cursor, case['purchase_id'])):
             raise HTTPException(409, 'Current facts no longer authorize this proposal')
+        if body.decision == 'approve' and not execution_enabled(cursor):
+            raise HTTPException(503, 'New repairs paused for recovery review')
         cursor.execute('INSERT INTO repair_approvals(workspace_id,proposal_id,subject,session_digest,decision,payload_digest,reason) VALUES (%s,%s,%s,%s,%s,%s,%s)',
                        (workspace, proposal_id, subject, digest(request.cookies['payment_session']), body.decision, body.payload_digest, body.reason.strip()))
         cursor.execute('UPDATE repair_proposals SET state=%s WHERE proposal_id=%s',
@@ -175,9 +183,11 @@ def decide(workspace: Identifier, proposal_id: Identifier, body: ProposalDecisio
 
 def claim_repair(database, workspace):
     with database.transaction(workspace) as cursor:
+        enabled = execution_enabled(cursor)
         cursor.execute('''SELECT * FROM repair_operations WHERE state=ANY(%s) AND due_at<=now()
+            AND (%s OR dispatch_started_at IS NOT NULL OR receipt IS NOT NULL)
             AND (attempts<%s OR state IN ('queued','executing')) AND (lease_until IS NULL OR lease_until<=now())
-            ORDER BY due_at,created_at FOR UPDATE SKIP LOCKED LIMIT 1''', (list(ACTIVE), MAX_ATTEMPTS))
+            ORDER BY due_at,created_at FOR UPDATE SKIP LOCKED LIMIT 1''', (list(ACTIVE), enabled, MAX_ATTEMPTS))
         row = cursor.fetchone()
         if row is None:
             return None
@@ -293,6 +303,9 @@ def execute_repair(app, operation):
         if not valid_receipt(receipt, payload):
             raise ReadFailure('receipt_binding_mismatch')
     elif not receipt:
+        with database.transaction(workspace) as cursor:
+            if not execution_enabled(cursor):
+                raise ReadFailure('execution_paused')
         refresh_evidence(app, operation)
         with database.transaction(workspace) as cursor:
             owned(cursor, operation)
@@ -316,6 +329,8 @@ def execute_repair(app, operation):
         # Commit intent before the call. Reclaimed workers MUST perform lookup.
         with database.transaction(workspace, approval['subject']) as cursor:
             owned(cursor, operation)
+            if not execution_enabled(cursor):
+                raise ReadFailure('execution_paused')
             latest = locked_case(cursor, proposal['case_id'])
             if (latest['fingerprint'] != proposal['fingerprint'] or not present(latest)['evidence_fresh']
                     or latest['outcome'] != 'eligible' or proposal['expires_at'] <= datetime.now(UTC)

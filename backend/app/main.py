@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse,JSONResponse
 from fastapi.staticfiles import StaticFiles
 import httpx
@@ -69,7 +70,17 @@ def create_app(service: str | None = None, settings: Settings | None = None):
                 response.headers['Cache-Control']='no-store'
             response.headers['X-Content-Type-Options']='nosniff'
             response.headers['Referrer-Policy']='no-referrer'
+            response.headers['X-Frame-Options']='DENY'
+            if request.url.path == '/' or request.url.path.startswith('/assets/'):
+                response.headers['Content-Security-Policy']="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
             return response
+
+    @app.exception_handler(RequestValidationError)
+    def invalid_input(request, error):
+        # Pydantic's default response echoes raw input, including unknown secrets.
+        # Keep only error categories. Even field names may be attacker supplied.
+        return JSONResponse({'detail': 'Invalid request',
+                             'errors': [{'type': item['type']} for item in error.errors()]}, status_code=422)
 
     @app.get("/health/live")
     def live():
