@@ -70,10 +70,15 @@ def apply_observation(cursor,purchase,attempts,observation_id,facts,now):
     fingerprint=material_fingerprint(facts)
     cursor.execute('INSERT INTO evaluations VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
         (workspace,observation_id,purchase_id,decision.policy_version,decision.outcome,Json(list(decision.reasons)),fingerprint,now))
-    cursor.execute("SELECT * FROM cases WHERE purchase_id=%s AND state IN ('open','awaiting_evidence') FOR UPDATE",(purchase_id,))
+    active_states=('open','awaiting_evidence','awaiting_approval','repair_in_progress','outcome_unknown')
+    cursor.execute("SELECT * FROM cases WHERE purchase_id=%s AND state=ANY(%s) FOR UPDATE",(purchase_id,list(active_states)))
     for case in cursor.fetchall():
         state='awaiting_evidence' if decision.outcome is Outcome.AWAITING_EVIDENCE else 'open'
-        if case['discrepancy_code']=='PAID_ACCESS_MISSING' and decision.outcome is Outcome.HEALTHY:
+        if case['state'] in ('repair_in_progress','outcome_unknown'):
+            state=case['state']
+        elif case['state']=='awaiting_approval' and case['fingerprint']==fingerprint and decision.outcome is Outcome.ELIGIBLE:
+            state='awaiting_approval'
+        if case['discrepancy_code']=='PAID_ACCESS_MISSING' and decision.outcome is Outcome.HEALTHY and case['state']!='outcome_unknown':
             state='resolved'
             cursor.execute("INSERT INTO case_audit(workspace_id,audit_id,case_id,subject,action,reason,fingerprint) VALUES (%s,%s,%s,'system','resolve','Current authoritative access is active',%s)",
                 (workspace,uuid.uuid4().hex,case['case_id'],fingerprint))
@@ -88,7 +93,7 @@ def apply_observation(cursor,purchase,attempts,observation_id,facts,now):
         return
     cursor.execute('SELECT state,fingerprint,generation FROM cases WHERE purchase_id=%s AND discrepancy_code=%s ORDER BY generation DESC LIMIT 1', (purchase_id,code))
     previous=cursor.fetchone()
-    if previous and (previous['state'] in ('open','awaiting_evidence') or
+    if previous and (previous['state'] in active_states or
                      previous['state']=='dismissed' and previous['fingerprint']==fingerprint):
         return
     cursor.execute('INSERT INTO cases VALUES (%s,%s,%s,%s,%s,\'open\',%s,%s,%s,%s,%s)',

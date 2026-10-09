@@ -1,6 +1,6 @@
 # Payment Reliability & Reconciliation Console
 
-Build plan · updated 2026-10-08 · Phase 1 foundation underway; later gates remain open
+Build plan · updated 2026-10-09 · Phase 4 simulator gate complete; release gates remain open
 
 ## 1. Purpose and project boundaries
 
@@ -348,6 +348,8 @@ is still Phase 4, and release accessibility/security/chaos checks remain Phase 5
 - Implement adapter compare-and-set and outcome lookup; persist all attempts.
 - Handle the remote-success/local-timeout crash window without issuing a new action.
 - Resolve cases only after checking the actual business state.
+
+Implementation and verification record: [Phase 4](docs/PHASE-4.md).
 
 Gate: the full paid-but-missing-access scenario completes, including concurrent
 approvals, a timeout after remote commit, a worker restart, and an intervening

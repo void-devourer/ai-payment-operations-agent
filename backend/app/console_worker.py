@@ -12,6 +12,7 @@ from .database import Database
 from .evidence import collect
 from .jobs import ReadFailure, claim, fail
 from .reconciliation import schedule_page
+from .repairs import run_repair
 
 
 def run_one(app,workspace):
@@ -47,6 +48,7 @@ def main():
                         for connection_id in connections:
                             schedule_page(database,workspace,connection_id)
                     run_one(app,workspace)
+                    run_repair(app,workspace)
                 if time.monotonic()>=next_scan:
                     next_scan=time.monotonic()+1
                 marker.touch()

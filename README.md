@@ -19,43 +19,40 @@ separate project and is not implemented in this workspace.
 
 ## Current status
 
-Phase 0 established the policy and contracts. Phase 1 now has console, reference
-business app and simulator APIs, PostgreSQL migrations/RLS, sessions, a durable
-registration outbox, and conditional access/receipts. **40 unit tests and 8 real
-PostgreSQL/HTTP tests pass**, together with console-outage recovery.
-[Hosted CI passed](https://github.com/void-devourer/ai-payment-operations-agent/actions/runs/37810505482).
-See [Phase 1](docs/PHASE-1.md) and the
-[local setup guide](docs/LOCAL-DEVELOPMENT.md). Full Stripe acceptance, the
-approval/repair execution, AI, deployment and benchmarks remain later work; user need is unvalidated.
+Phases 0–3 established the deterministic policy, independent reference business
+application and payment simulator, PostgreSQL isolation, durable ingestion and
+bounded evidence reads, all-age registered-purchase reconciliation, and the React
+investigation console at **http://127.0.0.1:8000**.
 
-Run local unit checks with Python 3.13 or 3.14 and the pinned dependencies:
+Phase 4 adds exact repair previews, human approval/rejection, transactional repair
+enqueue, conditional access changes, receipt lookup after uncertainty, and verified
+business recovery. Local verification passes 77 unit contracts and all 14 Phase 4 PostgreSQL/HTTP
+scenarios, earlier-phase regressions, the frontend build and the browser approval
+walkthrough. See [Phase 4](docs/PHASE-4.md).
+The console keeps its classic layout with separate Cases and Integration health
+pages. Owner/operator actions require a fresh session and current evidence.
+
+Run the local checks after the [setup guide](docs/LOCAL-DEVELOPMENT.md):
 
 ```powershell
-python -m pip install -r requirements.lock
 python -m unittest discover -s tests/unit -v
 python scripts/check_docs.py
+python scripts/check_phase4.py
 ```
 
-Phase 1's foundation gate is complete. Phase 2 adds durable signed simulator
-webhooks, leased read jobs, current payment/reversal/access observations and
-inspection/redrive APIs. See [Phase 2](docs/PHASE-2.md) and the
-[current hosted checks](https://github.com/void-devourer/ai-payment-operations-agent/actions/workflows/ci.yml).
-Local verification now passes 65 unit tests, 8 Phase 1 and 16 Phase 2 integration
-checks, plus automatic webhook/evidence recovery and the console-outage check.
-The optional Stripe adapter and genuine test runner are now implemented; see
-[Stripe setup](docs/STRIPE-SETUP.md). A genuine isolated temporary-sandbox smoke
-test passed on October 9: payments, refunds, manual capture and signed webhooks.
-Full adapter acceptance remains open because the temporary key denies account
-and dispute reads. The simulator needs no Stripe credentials and survives sandbox
-expiry. Offline fixtures and this limited smoke result do not close that gate. The later
-vertical slice detects missing access and verifies a human-approved repair.
+Implementation records: [Phase 1](docs/PHASE-1.md), [Phase 2](docs/PHASE-2.md),
+[Phase 3](docs/PHASE-3.md), and [current hosted checks](https://github.com/void-devourer/ai-payment-operations-agent/actions/workflows/ci.yml).
 
-Phase 3 now persists grace clocks and deterministic evaluations, detects cases,
-reconciles registered purchases independently of events, and serves the React case
-console at **http://127.0.0.1:8000**. Local checks pass 72 unit contracts and 10 real
-Phase 3 PostgreSQL/HTTP scenarios, plus the frontend production build and a browser
-walkthrough. See [Phase 3](docs/PHASE-3.md) for supported coverage and limits.
-Approval and repair execution are Phase 4.
+The simulator needs no Stripe credentials and survives temporary sandbox expiry.
+An isolated genuine temporary-sandbox smoke test passed on October 9 for payments,
+refunds, manual capture and signed webhooks. Full account-managed Stripe acceptance
+remains open because the temporary key denies account and dispute reads. See
+[Stripe setup](docs/STRIPE-SETUP.md). Offline fixtures and that limited smoke result
+do not close the genuine-provider gate.
+
+Phase 5 release security, accessibility, deployment, restore and performance gates
+remain open. AI is a later read-only evaluated extension. User need is unvalidated;
+local fixture identities are not production authentication.
 
 Local historical brainstorming and generated credentials/tools are ignored by
 Git. Use the planning documents above for the current scope. This repository is

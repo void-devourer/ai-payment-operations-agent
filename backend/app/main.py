@@ -52,6 +52,8 @@ def create_app(service: str | None = None, settings: Settings | None = None):
         app.include_router(ingestion_router)
         from .cases import router as cases_router
         app.include_router(cases_router)
+        from .repairs import router as repairs_router
+        app.include_router(repairs_router)
         frontend=Path(__file__).resolve().parents[2]/'frontend/dist'
         if frontend.exists():
             app.mount('/assets',StaticFiles(directory=frontend/'assets'),name='assets')

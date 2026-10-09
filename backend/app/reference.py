@@ -72,6 +72,7 @@ def grant_access(database, workspace: str, grant: Grant):
             cursor.execute("UPDATE access_grants SET status='active',revision=revision+1,ever_activated=true WHERE workspace_id=%s AND purchase_id=%s RETURNING revision", (workspace, grant.purchase_id))
             revision = cursor.fetchone()["revision"]
         receipt = {"operation_id": grant.operation_id, "workspace_id": workspace, "purchase_id": grant.purchase_id, "customer_id": grant.customer_id, "product_id": grant.product_id, "result": reason, "revision": revision, "recorded_at": datetime.now(UTC).isoformat()}
+        receipt['payload_digest'] = fingerprint
         # Even failed preconditions retain the operation's immutable payload identity.
         cursor.execute("INSERT INTO operation_receipts(workspace_id,operation_id,payload_digest,response_status,receipt) VALUES (%s,%s,%s,%s,%s)", (workspace, grant.operation_id, fingerprint, status, Json(receipt)))
         return status, receipt

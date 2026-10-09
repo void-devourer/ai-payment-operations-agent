@@ -22,16 +22,16 @@ def enqueue(cursor, workspace, connection, intent):
     return cursor.fetchone()["job_id"]
 
 
-def claim(database, workspace):
+def claim(database, workspace, intent=None):
     with database.transaction(workspace) as cursor:
         # Exhausted crashed workers become visible dead jobs rather than looping forever.
         cursor.execute("""UPDATE jobs SET state='dead',last_error='attempt_limit',lease_token=NULL,
             lease_until=NULL,updated_at=now() WHERE attempts >= %s AND
             (state IN ('queued','retry_wait') OR (state='leased' AND lease_until<=now()))""", (MAX_ATTEMPTS,))
-        cursor.execute("""SELECT * FROM jobs WHERE attempts < %s AND
+        cursor.execute("""SELECT * FROM jobs WHERE attempts < %s AND (%s IS NULL OR payment_intent_id=%s) AND
             ((state IN ('queued','retry_wait') AND due_at<=now()) OR
              (state='leased' AND lease_until<=now()))
-            ORDER BY due_at,created_at,job_id FOR UPDATE SKIP LOCKED LIMIT 1""", (MAX_ATTEMPTS,))
+            ORDER BY due_at,created_at,job_id FOR UPDATE SKIP LOCKED LIMIT 1""", (MAX_ATTEMPTS,intent,intent))
         job = cursor.fetchone()
         if job is None:
             return None

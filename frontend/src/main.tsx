@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import { request } from './api';
 import type { Case, Coverage, Detail, Health, Timeline, Workspace } from './api';
 import './style.css';
+import { Repairs } from './Repairs';
 
 const words = (value: string) => value.replaceAll('_', ' ').toLowerCase();
 const when = (value: string | null) => value ? new Date(value).toLocaleString() : 'In progress';
@@ -169,9 +170,10 @@ function App() {
             <section className="detail-section"><h3>Evidence history</h3><ol className="timeline">{timeline.map(t => <li key={t.observation_id}><strong>{words(t.outcome)}</strong><span>{when(t.finished_at)} · generation {t.generation}</span><span>{t.reasons.map(words).join(', ')}</span></li>)}</ol>
             {timelineCursor && <button className="secondary" disabled={busy} onClick={moreHistory}>Load earlier evidence</button>}
             <details><summary>Technical references</summary><dl><dt>Source</dt><dd>{words(detail.observation.source)} · {detail.observation.api_version}</dd><dt>Observation</dt><dd className="mono">{detail.latest_observation_id}</dd><dt>SHA-256</dt><dd className="mono">{detail.observation.content_digest}</dd><dt>Policy</dt><dd>{detail.policy_version}</dd></dl><p className="muted">Financial settlement is not verified by these access reads.</p></details></section>
+            <Repairs detail={detail} base={base} csrf={csrf} role={role} fresh={isFresh(detail)} now={now} onChanged={() => setRefresh(r => r + 1)}/>
             <section className="detail-section"><h3>Disposition</h3><p>Dismiss a finding to document an intentional exception. A material change can open a new finding.</p>
             <form onSubmit={dismiss}><label htmlFor="reason">Disposition reason</label><textarea id="reason" placeholder="Explain why this finding is an intentional exception." value={reason} onChange={e => setReason(e.target.value)} minLength={5} maxLength={1000} required/>
-              <button disabled={busy || !csrf || role === 'viewer' || !isFresh(detail) || !['open','awaiting_evidence'].includes(detail.state)}>Dismiss finding</button></form>
+              <button disabled={busy || !csrf || role === 'viewer' || !isFresh(detail) || !['open','awaiting_evidence','awaiting_approval'].includes(detail.state)}>Dismiss finding</button></form>
             {role === 'viewer' ? <p className="muted">Viewers can review evidence. An owner or operator must record a disposition.</p> : !csrf && <p className="muted">Sign in again to record a disposition.</p>}</section>
             <section className="detail-section"><h3>Decision history</h3>{detail.audit.length ? detail.audit.map((a,i) => <div className="record" key={i}><strong>{words(a.action)}</strong><p className="muted">{a.subject} · {when(a.created_at)}</p><p>{a.reason}</p></div>) : <p className="muted">No disposition recorded.</p>}</section>
           </>}</section></div>}</>}

@@ -105,11 +105,12 @@ def dismiss(workspace: Identifier,case_id: Identifier,body: Dismissal,request: R
         head=cursor.fetchone()
         cursor.execute(CASE_SELECT+' WHERE c.case_id=%s FOR UPDATE OF c',(case_id,))
         case=cursor.fetchone()
-        if (case['state'] not in ('open','awaiting_evidence') or
+        if (case['state'] not in ('open','awaiting_evidence','awaiting_approval') or
             case['latest_observation_id']!=body.observation_id or case['fingerprint']!=body.fingerprint or
             head['observation_id']!=body.observation_id or not present(case)['evidence_fresh']):
             raise HTTPException(409,'Case/evidence changed or is incomplete; refresh before dismissing')
         cursor.execute("UPDATE cases SET state='dismissed',updated_at=now() WHERE case_id=%s",(case_id,))
+        cursor.execute("UPDATE repair_proposals SET state='superseded' WHERE case_id=%s AND state='pending'",(case_id,))
         cursor.execute('INSERT INTO case_audit(workspace_id,audit_id,case_id,subject,action,reason,fingerprint) VALUES (%s,%s,%s,%s,\'dismiss\',%s,%s)',
             (workspace,uuid.uuid4().hex,case_id,subject,body.reason.strip(),body.fingerprint))
     return {'case_id':case_id,'state':'dismissed'}

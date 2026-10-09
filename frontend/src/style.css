@@ -96,3 +96,12 @@ footer {padding:20px;text-align:center;color:#596371;font-size:14px}
   .health-page dl:not(.metrics) {grid-template-columns:1fr;gap:4px}
   .health-page dl:not(.metrics) dd {margin-bottom:10px}
 }
+
+h4 {font-size:16px;margin:0 0 12px;text-transform:capitalize}
+.repair-preview {margin-top:20px;border-top:1px solid #e0e4e9;padding-top:18px}
+.repair-preview textarea {margin-top:8px}
+.confirm-target {display:flex;align-items:start;gap:10px;margin:14px 0;font-weight:400}
+.confirm-target input {width:18px;height:18px;margin-top:4px;flex-shrink:0}
+.decision-actions {display:flex;flex-wrap:wrap;gap:10px}
+.action-help {margin-top:10px}
+.repair-result {margin-top:20px;padding-top:16px;border-top:1px solid #e0e4e9}
