@@ -31,6 +31,7 @@ function App() {
   const [reason, setReason] = useState('');
   const [refresh, setRefresh] = useState(0);
   const [now, setNow] = useState(Date.now());
+  const [page, setPage] = useState<'cases' | 'health'>('cases');
   const title = useRef<HTMLHeadingElement>(null);
   const role = workspaces.find(w => w.workspace_id === workspace)?.role;
   const base = `/api/workspaces/${encodeURIComponent(workspace)}`;
@@ -79,7 +80,7 @@ function App() {
       return [d, history] as const;
     }).then(([d, history]) => {
       setDetail(d); setTimeline(history.data); setTimelineCursor(history.next_generation);
-      title.current?.focus();
+      title.current?.focus({preventScroll: true});
     }).catch(e => { if (e.name !== 'AbortError') setError(e.message); });
     return () => controller.abort();
   }, [workspace, selected, refresh]);
@@ -123,61 +124,58 @@ function App() {
   }
 
   return <>
-    <a className="skip" href="#main">Skip to investigation</a>
-    <header><div><p className="eyebrow">PAYMENT OPERATIONS / LOCAL DEMO</p><h1>Know what happened.<br/>Recover with evidence.</h1></div>
-      <span className="badge">Local development</span></header>
+    <a className="skip" href="#main">Skip to content</a>
+    <header className="app-header"><div><h1>Payment Operations</h1><p>Review payment findings and their supporting evidence.</p></div><span className="badge">Local demo</span></header>
     <main id="main">
       {error && <p className="alert" role="alert">{error}</p>}
       {message && <p className="notice" role="status">{message}</p>}
-      {!workspace ? <section className="card login"><h2>Open your workspace</h2><p>This development console uses local fixture identities. Enter the generated demo login key from your private .env file.</p>
+      {!workspace ? <section className="panel login"><h2>Open your workspace</h2><p>This local demo uses fixture identities. Enter the generated login key from your private .env file.</p>
         <form onSubmit={login}><label htmlFor="identity">Identity</label><select id="identity" value={subject} onChange={e => setSubject(e.target.value)}>
           {['owner_a','operator_a','viewer_a','owner_b'].map(value => <option key={value}>{value}</option>)}</select>
           <label htmlFor="key">Demo login key</label><input id="key" type="password" autoComplete="off" value={loginKey} onChange={e => setLoginKey(e.target.value)} required/>
           <button disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button></form></section> : <>
-        <nav aria-label="Workspace controls"><label htmlFor="workspace">Workspace</label><select id="workspace" disabled={busy} value={workspace} onChange={e => openWorkspace(e.target.value)}>
-          {workspaces.map(w => <option key={w.workspace_id} value={w.workspace_id}>{w.workspace_id} · {w.role}</option>)}</select>
-          <button disabled={busy} onClick={() => setRefresh(r => r + 1)}>Refresh evidence view</button>
+        <div className="workspace-bar"><div className="workspace-picker"><label htmlFor="workspace">Workspace</label><select id="workspace" disabled={busy} value={workspace} onChange={e => openWorkspace(e.target.value)}>
+          {workspaces.map(w => <option key={w.workspace_id} value={w.workspace_id}>{w.workspace_id} · {w.role}</option>)}</select></div>
+          <div className="workspace-actions"><button className="secondary" disabled={busy} onClick={() => setRefresh(r => r + 1)}>Refresh evidence</button>
           {!csrf && <button disabled={busy} onClick={() => openWorkspace('')}>Sign in for actions</button>}
           <button className="secondary" disabled={busy || !csrf} onClick={async () => {
             try { await request(base + '/sessions/revoke', {method: 'POST', headers: {'X-CSRF-Token': csrf}}); openWorkspace(''); setWorkspaces([]); setCsrf(''); setMessage('Signed out.'); }
             catch (e) { setError((e as Error).message); }
-          }}>Sign out</button></nav>
-        <p className="muted" role="status">{busy ? 'Loading current workspace…' : 'Current view loaded. Refresh to check for changes.'}</p>
-        {coverage && <section aria-labelledby="coverage-title"><div className="section-heading"><h2 id="coverage-title">What we have verified</h2><span className="muted">All registered purchases, including older ones</span></div>
-          <div className="metrics">{Object.entries(coverage.evidence_coverage).map(([name,value]) => <div className="metric" key={name}><strong>{value}</strong><span>{words(name)}</span></div>)}</div>
-          <div className="card health"><h3>Connection & scan health</h3>
-            {health?.connections.map(c => <p key={c.connection_id}><strong>{c.connection_id}</strong> · {c.provider} · {c.environment}</p>)}
-            {coverage.runs.map(run => <p key={run.connection_id}>Sweep: {words(run.state)} · {run.scheduled_purchases} purchases scheduled · {run.unbound_purchases} without bounded attempt coverage · {when(run.finished_at)}</p>)}
-            {health?.jobs.map(job => <span className="chip" key={job.state}>{words(job.state)} jobs: {job.count}</span>)}
-            {health?.receipts.map(receipt => <span className="chip" key={receipt.state}>{words(receipt.state)} receipts: {receipt.count}</span>)}
-            <p className="muted">A scheduled scan means reads were queued. It does not confirm they succeeded. Unregistered provider inventory and expired event history are outside this scan.</p></div></section>}
-        <div className="investigation"><section aria-labelledby="inbox-title"><div className="section-heading"><h2 id="inbox-title">Case inbox</h2><span className="muted">{cases.length} loaded</span></div>
-          {!cases.length && !busy && <div className="card"><h3>No findings yet</h3><p>Successful payments start a two-minute fulfillment grace period. No cases does not guarantee complete evidence; check coverage above.</p></div>}
-          <ul className="case-list">{cases.map(c => <li key={c.case_id}><button disabled={busy} className={`case-row ${selected === c.case_id ? 'selected' : ''}`} onClick={() => {setSelected(c.case_id); setMessage('');}}>
-            <span className="row-top"><span className="badge">{words(c.state)}</span><span className={isFresh(c) ? 'fresh' : 'unknown'}>{isFresh(c) ? 'Fresh evidence' : 'Evidence uncertain'}</span></span>
-            <strong>{words(c.discrepancy_code)}</strong><span className="mono">{c.purchase_id}</span><span>{isFresh(c) ? words(c.current_outcome) : 'awaiting evidence'} · generation {c.generation}</span></button></li>)}</ul>
-          {cursor && <button disabled={busy} onClick={moreCases}>Load more cases</button>}</section>
-        <section className="card detail" aria-labelledby="detail-title"><h2 id="detail-title" ref={title} tabIndex={-1}>{detail ? 'Investigation' : selected ? 'Loading investigation…' : 'Select a case'}</h2>
-          {!detail && <p className="muted">Read the current payment, reversal and business-access facts together.</p>}
-          {detail && <><p className="eyebrow">{words(detail.discrepancy_code)} / GENERATION {detail.generation}</p><h3 className="mono">{detail.purchase_id}</h3>
-            <p className={isFresh(detail) ? 'notice' : 'alert'}>{isFresh(detail) ? 'Evidence is fresh and complete.' : 'Evidence is stale, incomplete or superseded. No action is eligible.'}</p>
-            <p><strong>{isFresh(detail) ? words(detail.current_outcome) : 'awaiting evidence'}</strong> · {isFresh(detail) ? detail.current_reasons.map(words).join(', ') : 'refresh to verify current facts'}</p>
+          }}>Sign out</button></div></div>
+        <nav className="page-nav" aria-label="Console sections"><button aria-current={page === 'cases' ? 'page' : undefined} onClick={() => setPage('cases')}>Cases</button><button aria-current={page === 'health' ? 'page' : undefined} onClick={() => setPage('health')}>Integration health</button></nav>
+        <p className="view-status muted" role="status">{busy ? 'Loading workspace…' : 'Refresh evidence to check for changes.'}</p>
+        {page === 'health' ? <section className="health-page" aria-labelledby="health-title"><h2 id="health-title">Integration health</h2><p className="muted">Coverage and processing status for this workspace.</p>
+          {coverage && <><section className="panel"><h3>Evidence coverage</h3><dl className="metrics">{Object.entries(coverage.evidence_coverage).map(([name,value]) => <div key={name}><dt>{words(name)}</dt><dd>{value}</dd></div>)}</dl><p className="muted">Includes all registered purchases, including older ones. Unregistered provider inventory and expired event history are outside this scan.</p></section>
+          <section className="panel"><h3>Connections</h3>{health?.connections.length ? health.connections.map(c => <div className="record" key={c.connection_id}><strong className="mono">{c.connection_id}</strong><p>{c.provider} · {c.environment}</p></div>) : <p className="muted">No connections available.</p>}</section>
+          <section className="panel"><h3>Reconciliation scans</h3>{coverage.runs.length ? coverage.runs.map(run => <div className="record" key={run.connection_id}><strong>{words(run.state)}</strong><dl><dt>Connection</dt><dd className="mono">{run.connection_id}</dd><dt>Purchases scheduled</dt><dd>{run.scheduled_purchases}</dd><dt>Unbounded attempts</dt><dd>{run.unbound_purchases}</dd><dt>Finished</dt><dd>{when(run.finished_at)}</dd></dl></div>) : <p className="muted">No scans recorded.</p>}<p className="muted">Scheduled reads are queued work. They do not confirm successful verification.</p></section>
+          <div className="health-columns"><section className="panel"><h3>Processing jobs</h3>{health?.jobs.length ? <dl>{health.jobs.map(job => <div className="stat-row" key={job.state}><dt>{words(job.state)}</dt><dd>{job.count}</dd></div>)}</dl> : <p className="muted">No jobs recorded.</p>}</section><section className="panel"><h3>Webhook receipts</h3>{health?.receipts.length ? <dl>{health.receipts.map(receipt => <div className="stat-row" key={receipt.state}><dt>{words(receipt.state)}</dt><dd>{receipt.count}</dd></div>)}</dl> : <p className="muted">No receipts recorded.</p>}</section></div></>}
+        </section> : <div className={`investigation ${selected ? 'has-selection' : ''}`}>
+        <section className="panel inbox" aria-labelledby="inbox-title"><div className="section-heading"><h2 id="inbox-title">Cases</h2><span className="muted">{cases.length} loaded</span></div>
+          {!cases.length && !busy && <div className="empty"><h3>No findings yet</h3><p>Successful payments have a two-minute fulfillment grace period. Check integration health to confirm evidence coverage.</p></div>}
+          <ul className="case-list">{cases.map(c => <li key={c.case_id}><button disabled={busy} aria-pressed={selected === c.case_id} className={`case-row ${selected === c.case_id ? 'selected' : ''}`} onClick={() => {setSelected(c.case_id); setMessage('');}}>
+            <strong>{words(c.discrepancy_code)}</strong><span className="case-id mono" title={c.purchase_id}>{c.purchase_id}</span><span>{words(c.state)} · {isFresh(c) ? 'Fresh' : 'Uncertain'}</span></button></li>)}</ul>
+          {cursor && <div className="list-footer"><button className="secondary" disabled={busy} onClick={moreCases}>Load more cases</button></div>}</section>
+        <section className="panel detail" aria-labelledby="detail-title"><button className="secondary back-button" onClick={() => setSelected('')}>Back to cases</button><div className="detail-heading"><h2 id="detail-title" ref={title} tabIndex={-1}>{detail ? 'Investigation' : selected ? 'Loading investigation…' : 'Select a case'}</h2>
+          {!detail && <p className="muted">Choose a finding to review payment, reversal and access facts.</p>}
+          {detail && <><p>{words(detail.discrepancy_code)} · {words(detail.state)}</p><p className="mono">{detail.purchase_id}</p></>}</div>
+          {detail && <>
+            <section className="detail-section"><h3>Summary</h3><p className={isFresh(detail) ? 'notice' : 'alert'}>{isFresh(detail) ? 'Evidence is fresh and complete.' : 'Evidence is stale, incomplete or superseded. No action is eligible.'}</p>
+            <p><strong>{isFresh(detail) ? words(detail.current_outcome) : 'awaiting evidence'}</strong><br/>{isFresh(detail) ? detail.current_reasons.map(words).join(', ') : 'Refresh to verify current facts.'}</p>
             <dl><dt>Expected purchase</dt><dd>{money(detail.purchase.expected_amount_minor, detail.purchase.currency)} · {detail.purchase.product_id}</dd>
               <dt>Business access</dt><dd>{detail.observation.facts.access ? `${words(detail.observation.facts.access.status)} · revision ${detail.observation.facts.access.revision}` : 'Unknown'}</dd>
-              <dt>Reversal history</dt><dd>{detail.observation.facts.refunds.length} refunds · {detail.observation.facts.disputes.length} disputes</dd>
-              <dt>Evidence source</dt><dd>{words(detail.observation.source)} · {detail.observation.api_version}</dd></dl>
-            <h3>Current payment attempts</h3>{detail.observation.facts.payments.map(payment => <p key={payment.payment_intent_id}><span className="mono">{payment.payment_intent_id}</span><br/>{words(payment.status)} · {money(payment.amount_received_minor, payment.currency)} received</p>)}
-            {detail.observation.facts.errors.map((e,i) => <p className="alert" key={i}>{words(e.bundle)}: {words(e.code)}</p>)}
-            <h3>Evidence timeline</h3><ol className="timeline">{timeline.map(t => <li key={t.observation_id}><strong>{words(t.outcome)}</strong><span>{when(t.finished_at)} · read generation {t.generation}</span><span>{t.reasons.map(words).join(', ')}</span></li>)}</ol>
-            {timelineCursor && <button disabled={busy} onClick={moreHistory}>Load earlier evidence</button>}
-            <details><summary>Observation reference</summary><p className="mono">{detail.latest_observation_id}</p><p className="mono">SHA-256 {detail.observation.content_digest}</p><p>Policy: {detail.policy_version}. Financial settlement is not verified by these access reads.</p></details>
-            <h3>Record a disposition</h3><p>Dismissal documents an intentional exception. A material change can open a new finding. Access repair approval arrives in Phase 4.</p>
-            <form onSubmit={dismiss}><label htmlFor="reason">Disposition reason</label><textarea id="reason" value={reason} onChange={e => setReason(e.target.value)} minLength={5} maxLength={1000} required/>
+              <dt>Reversal history</dt><dd>{detail.observation.facts.refunds.length} refunds · {detail.observation.facts.disputes.length} disputes</dd></dl>
+            {detail.observation.facts.errors.map((e,i) => <p className="alert" key={i}>{words(e.bundle)}: {words(e.code)}</p>)}</section>
+            <section className="detail-section"><h3>Payment attempts</h3>{detail.observation.facts.payments.length ? detail.observation.facts.payments.map(payment => <div className="record" key={payment.payment_intent_id}><p><strong>{words(payment.status)}</strong> · {money(payment.amount_received_minor, payment.currency)} received</p><p className="mono">{payment.payment_intent_id}</p></div>) : <p className="muted">No payment attempts in this observation.</p>}</section>
+            <section className="detail-section"><h3>Evidence history</h3><ol className="timeline">{timeline.map(t => <li key={t.observation_id}><strong>{words(t.outcome)}</strong><span>{when(t.finished_at)} · generation {t.generation}</span><span>{t.reasons.map(words).join(', ')}</span></li>)}</ol>
+            {timelineCursor && <button className="secondary" disabled={busy} onClick={moreHistory}>Load earlier evidence</button>}
+            <details><summary>Technical references</summary><dl><dt>Source</dt><dd>{words(detail.observation.source)} · {detail.observation.api_version}</dd><dt>Observation</dt><dd className="mono">{detail.latest_observation_id}</dd><dt>SHA-256</dt><dd className="mono">{detail.observation.content_digest}</dd><dt>Policy</dt><dd>{detail.policy_version}</dd></dl><p className="muted">Financial settlement is not verified by these access reads.</p></details></section>
+            <section className="detail-section"><h3>Disposition</h3><p>Dismiss a finding to document an intentional exception. A material change can open a new finding.</p>
+            <form onSubmit={dismiss}><label htmlFor="reason">Disposition reason</label><textarea id="reason" placeholder="Explain why this finding is an intentional exception." value={reason} onChange={e => setReason(e.target.value)} minLength={5} maxLength={1000} required/>
               <button disabled={busy || !csrf || role === 'viewer' || !isFresh(detail) || !['open','awaiting_evidence'].includes(detail.state)}>Dismiss finding</button></form>
-            {!csrf && <p className="muted">This restored session is read-only. Sign in again to obtain an action token.</p>}
-            <h3>Recorded decisions</h3>{detail.audit.length ? detail.audit.map((a,i) => <p key={i}><strong>{words(a.action)}</strong> · {a.subject} · {when(a.created_at)}<br/>{a.reason}</p>) : <p className="muted">No disposition recorded.</p>}
-          </>}</section></div></>}
-    </main><footer>Payment Reliability & Reconciliation Console · Deterministic detection · Human decisions</footer>
+            {role === 'viewer' ? <p className="muted">Viewers can review evidence. An owner or operator must record a disposition.</p> : !csrf && <p className="muted">Sign in again to record a disposition.</p>}</section>
+            <section className="detail-section"><h3>Decision history</h3>{detail.audit.length ? detail.audit.map((a,i) => <div className="record" key={i}><strong>{words(a.action)}</strong><p className="muted">{a.subject} · {when(a.created_at)}</p><p>{a.reason}</p></div>) : <p className="muted">No disposition recorded.</p>}</section>
+          </>}</section></div>}</>}
+    </main><footer>Payment Operations · Local development console</footer>
   </>;
 }
 
