@@ -1,6 +1,13 @@
 # Payment Reliability & Reconciliation Console
 
-Build plan · updated 2026-10-09 · Phase 4 simulator gate complete; release gates remain open
+Build plan · updated 2026-10-10 · Local finishing pass; original release gates remain open
+
+**2026-10-10 scope decision:** the user accepted a bounded local portfolio
+finishing pass: visible post-commit crash recovery, distinct-purchase end-to-end
+measurements, and an evidence-backed engineering explanation. See
+[PROJECT-DIRECTION.md](PROJECT-DIRECTION.md). The phases below preserve the
+original design and its outstanding gates; they are not automatic authorization
+to add AI, financial reconciliation, or production deployment after this pass.
 
 ## 1. Purpose and project boundaries
 
@@ -189,8 +196,9 @@ Kafka, Kubernetes, or sharding requirement without measured need.
 
 Python runtime dependencies are now pinned in `requirements.lock`. Phase 1's
 direct-SQL implementation is described in [docs/PHASE-1.md](docs/PHASE-1.md).
-Frontend and hosting choices remain planned; compatibility and their lockfiles
-must be verified in their phases. No paid service is provisioned.
+The React console and its lockfile/build are implemented. Public hosting and
+production identity remain deferred; local fixture identities do not implement
+the proposed managed OIDC deployment. No paid service is provisioned.
 
 No Redis is required initially. Add caching or an external broker only when a
 benchmark identifies the specific need and the consistency/recovery design is

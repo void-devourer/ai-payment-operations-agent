@@ -117,6 +117,27 @@ operators must enter synthetic descriptions and keep the private dumps local.
 
 ## Verification and benchmark
 
+For the October 10 finishing pass, the recorded crash demonstration and a
+distinct-purchase investigation workload are documented in
+[PORTFOLIO-FINISH.md](PORTFOLIO-FINISH.md). Run separately:
+
+```powershell
+python scripts/demo_recovery.py
+python scripts/benchmark_investigation.py --per-workspace 12 --noisy-seconds 30 --noisy-rate 10 --restart-worker
+```
+
+The recovery harness approves only its synthetic fixture through the owner API,
+briefly stops the console worker, and uses the existing child-process crash hook.
+It keeps real grace and lease clocks and restarts the worker in `finally`.
+It is a verification demonstration, distinct from the HTTP-only interactive demo.
+Do not run it during a benchmark or another integration suite.
+
+The new benchmark measures receipt-to-evidence and receipt-to-decision times,
+including the real grace period for missing access. Its mixed failed/refunded
+states check that notifications do not override authoritative evidence. It has
+two workspaces, preserved background inventory, and a labelled graceful restart;
+it does not establish the original 10-workspace capacity or a freshness SLA.
+
 ```powershell
 python -m unittest discover -s tests/unit
 python scripts/check_docs.py
@@ -146,7 +167,7 @@ That broader workload requires configurable identities and additional measuremen
 | Account-managed Stripe payment/refund/dispute acceptance | Pending account access |
 | Live charges/refunds/payouts, automatic money movement | Unsupported |
 | Subscription/proration/tax/financial ledger | Unsupported in this software phase |
-| Generative AI investigation assistant | Next phase after its own design/evaluation gate |
+| Generative AI investigation assistant | Deferred; requires a separate scope decision and evaluation gate |
 | Real customer need / supervised pilot | Pending user discovery |
 
 Public deployment needs a separate identity/secrets/TLS design and a selected

@@ -1,0 +1,79 @@
+{
+  "fixture": {
+    "workspace_id": "ws_a",
+    "purchase_id": "demo_09325cc6783d49f88ec2dc042f5dd899",
+    "payment_intent_id": "sim_pi_fe21ff201d98a47722c5c447ed7b5501",
+    "scenario": "missing-access",
+    "simulated": true
+  },
+  "operation_id": "e2bf7f2c576f4243873309008a9487f9",
+  "passed": false,
+  "complete": true,
+  "timeline": [
+    {
+      "at": "2026-10-10T13:45:06.310726+00:00",
+      "step": "synthetic_payment_confirmed_access_missing",
+      "purchase_id": "demo_09325cc6783d49f88ec2dc042f5dd899"
+    },
+    {
+      "at": "2026-10-10T13:47:10.521333+00:00",
+      "step": "real_grace_elapsed_case_eligible",
+      "case_id": "f10b158512a94a17a4a0914a81c98308"
+    },
+    {
+      "at": "2026-10-10T13:47:11.480344+00:00",
+      "step": "synthetic_owner_approval_committed",
+      "operation_id": "e2bf7f2c576f4243873309008a9487f9"
+    },
+    {
+      "at": "2026-10-10T13:47:14.743507+00:00",
+      "step": "child_died_after_target_commit",
+      "exit_code": 73,
+      "target_revision": 1,
+      "console_state": "executing",
+      "console_receipt_recorded": false
+    },
+    {
+      "at": "2026-10-10T13:47:18.067488+00:00",
+      "step": "normal_worker_restarted_waiting_for_real_lease_expiry"
+    },
+    {
+      "at": "2026-10-10T13:57:18.626503+00:00",
+      "step": "recovery_not_verified",
+      "seconds_since_crash": 603.88,
+      "operation_state": "applied_not_recovered",
+      "target_revision": 1,
+      "attempt_counts": {
+        "dispatch": 1,
+        "lookup": 1,
+        "result": 1,
+        "verify": 1
+      }
+    }
+  ],
+  "operation": {
+    "operation_id": "e2bf7f2c576f4243873309008a9487f9",
+    "state": "applied_not_recovered",
+    "dispatch_started_at": "2026-10-10 13:47:14.687039+00:00",
+    "receipt": {
+      "result": "granted",
+      "revision": 1,
+      "product_id": "digital_pass",
+      "customer_id": "synthetic_09325cc6783d49f88ec2dc042f5dd899",
+      "purchase_id": "demo_09325cc6783d49f88ec2dc042f5dd899",
+      "recorded_at": "2026-10-10T13:47:14.713106+00:00",
+      "operation_id": "e2bf7f2c576f4243873309008a9487f9",
+      "workspace_id": "ws_a",
+      "payload_digest": "dbdcd31670203c44f825cafda141945d7a12626cdcc4a189eaf826896f73f492"
+    },
+    "verification_observation_id": "ee25620410db4000aba3cb40a9b2ffe7",
+    "lease_until": null,
+    "attempt_counts": {
+      "dispatch": 1,
+      "lookup": 1,
+      "result": 1,
+      "verify": 1
+    }
+  },
+  "scope": "Synthetic owner approval by harness; real grace and lease; actual child death; existing inventory preserved. One observed effect, no universal exactly-once guarantee."
+}

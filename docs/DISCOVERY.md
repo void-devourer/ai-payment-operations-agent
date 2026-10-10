@@ -60,8 +60,8 @@ messages to interview candidates automatically.
 | Incidents recur enough to justify investigation tooling | Recent incident examples and frequency | Unvalidated |
 | Teams can register exact purchase/provider/access bindings | Architecture/API walkthrough | Unvalidated; reference app will demonstrate |
 | Operators need supervised repair beyond better normal fulfillment | Actual repair workflow and alternatives | Unvalidated |
-| Conditional target writes and durable receipts are feasible | Implemented adapter and failure tests | Planned in Phase 1 |
-| Core evidence reads are affordable and available | Sandbox adapter, permissions/budgets, then pilot | Not yet verified |
+| Conditional target writes and durable receipts are feasible | Implemented adapter and failure tests | Reference adapter and actual post-commit crash tests implemented; third-party adoption unvalidated |
+| Core evidence reads are affordable and available | Sandbox adapter, permissions/budgets, then pilot | Simulator reads and local costs measured; full Stripe acceptance and real-user budget remain open |
 | Joined evidence reduces effort | Baseline versus supervised comparison with same scenarios | No measured result |
 
 Continue the technical simulation while discovery is pending. Revise the product

@@ -1,10 +1,13 @@
 # Architecture and correctness contracts
 
-Status: architecture contract, updated 2026-10-08; Phase 1 foundation and Phase 2
-simulator ingestion/evidence are documented in [PHASE-1.md](PHASE-1.md) and
-[PHASE-2.md](PHASE-2.md). Stripe integration and later modules remain planned. Implementation must satisfy
-[ACCEPTANCE.md](ACCEPTANCE.md). Provider constraints and their official sources
-are in [RESEARCH.md](RESEARCH.md).
+Status: architecture contract, updated 2026-10-10. The independent simulator,
+reference app, durable ingestion, detection, React console, controlled repairs,
+and local release package are implemented. The original design includes further
+production/AI capabilities; their presence below does not declare implementation
+or acceptance. Current evidence and limitations are in
+[PORTFOLIO-FINISH.md](PORTFOLIO-FINISH.md) and [RELEASE-RUNBOOK.md](RELEASE-RUNBOOK.md).
+Full account-managed Stripe acceptance remains open. Original requirements are
+in [ACCEPTANCE.md](ACCEPTANCE.md); provider sources are in [RESEARCH.md](RESEARCH.md).
 
 ## 1. System shape
 
@@ -23,7 +26,7 @@ flowchart LR
     W -->|approved conditional access repair| APP
     APP --> APPDB[(Separate business database)]
     W -->|observations and outcomes| DB
-    AI[Optional evidence assistant] -->|authorized read tools| API
+    AI[Evidence assistant - deferred] -.->|planned authorized read tools| API
 ```
 
 The reference app shares no transaction or database connection with the console.
@@ -54,9 +57,20 @@ Detection must be callable without a model or a network request. Provider and
 business adapters handle network behavior; they do not decide policy. Avoid a
 single `agent.py` that owns persistence, policy, and mutations.
 
-Suggested structure: `backend/app/<module>/`, `frontend/`, `reference_app/`,
-`tests/unit/`, `tests/integration/`, `tests/e2e/`, `tests/chaos/`, `benchmarks/`,
-`fixtures/`, `docs/`, and `infra/`. These are planned paths, not existing code.
+Actual local implementation paths:
+
+| Responsibility | Code |
+| --- | --- |
+| Console registry, sessions and permissions | `backend/app/console.py`, `security.py`, `database.py` |
+| Notifications, durable reads and scheduling | `backend/app/ingestion.py`, `jobs.py`, `evidence.py`, `console_worker.py`, `reconciliation.py` |
+| Policy, evidence projection and investigations | `backend/app/detection/`, `backend/app/cases.py` |
+| Approval and uncertain-outcome recovery | `backend/app/repairs.py` |
+| Independent business/provider authorities | `backend/app/reference.py`, `reference_worker.py`, `simulator.py`, `simulator_worker.py`, separate PostgreSQL databases |
+| Operator UI and verification | `frontend/`, `tests/unit/`, `scripts/check_phase*.py`, local demo/benchmark scripts |
+
+These modules share an image but execute as independent services/processes.
+AI and the proposed production identity/encryption/retention deployment are
+deferred; local credentials are generated in ignored environment files.
 
 ## 3. Authorities and immutable expectations
 
@@ -212,6 +226,14 @@ receipt and audited replay authorization.
 
 Job states: `queued`, `leased`, `retry_wait`, `completed`, `dead`.
 
+Since the October 10 finishing change, a successful complete read that is still
+inside fulfillment grace leaves a durable queued job due at first confirmed
+success plus the policy's grace period. Observation publication and scheduling
+commit together. A new notification expedites a queued timer, while retry-wait
+provider backoff is preserved. A timer only initiates another evidence read;
+it cannot authorize access. Due time is a scheduling deadline, not a guarantee
+of immediate service. The all-purchase sweep remains independent fallback work.
+
 Claim due jobs with a short transaction using row locks and `SKIP LOCKED`; set a
 lease identity and expiry atomically. Do not hold database transactions/row locks
 across network calls. PostgreSQL explicitly identifies `SKIP LOCKED` as useful
@@ -264,6 +286,12 @@ guarantee that everything is healthy.
 
 Case states: `open`, `awaiting_evidence`, `awaiting_approval`,
 `repair_in_progress`, `outcome_unknown`, `resolved`, `dismissed`.
+
+The local projection keeps a resolved missing-access case aligned with later
+healthy observations, retaining its state without duplicating the resolution
+audit entry. This permits receipt recovery to verify current evidence when
+ordinary delivery already resolved the case. Changed facts do not rewrite that
+terminal history; a new discrepancy follows the normal generation rules.
 
 - Qualifying overdue mismatch opens a case; incomplete evidence waits.
 - An eligible pending proposal moves it to awaiting approval.

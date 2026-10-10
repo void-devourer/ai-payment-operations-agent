@@ -5,8 +5,41 @@ not produce the expected access in a business application, with controlled,
 human-approved repair and verified recovery.
 
 The primary career focus is software engineering. A read-only, evaluated AI
-investigation assistant is a later extension. Data Reliability & Replay is a
-separate project and is not implemented in this workspace.
+investigation assistant is an optional future extension. The current deliverable
+is a reproducible local reliability demonstration, with a bounded finishing
+scope accepted on October 10. Data Reliability & Replay / TraceBack is a separate
+candidate and is not implemented in this workspace.
+
+## Try the local demo
+
+Follow [the setup and release runbook](docs/RELEASE-RUNBOOK.md). The simulator
+uses persistent independent services and needs no Stripe account. The ordinary
+business application fulfills successful purchases itself; the console handles
+exceptions through investigation and approved application-access repair.
+
+```powershell
+python scripts/demo.py --scenario missing-access
+```
+
+Open **http://127.0.0.1:8000** and review the generated case after its real grace
+period. Credentials stay in the ignored local `.env` file.
+
+## Engineering walkthrough
+
+- [Case study](docs/ENGINEERING-CASE-STUDY.md): the post-commit failure window,
+  tradeoffs, recovery sequence, and questions the author should understand.
+- [Finishing evidence](docs/PORTFOLIO-FINISH.md): recorded crash demonstration,
+  distinct-purchase investigation benchmark, and limitations.
+- [Architecture](docs/ARCHITECTURE.md): database, worker, access adapter and API
+  contracts; [domain vocabulary](CONTEXT.md) keeps payment and access distinct.
+
+The crash demonstration's test harness approves only its own synthetic fixture.
+Run it separately from the benchmark and integration suites:
+
+```powershell
+python scripts/demo_recovery.py
+python scripts/benchmark_investigation.py --restart-worker
+```
 
 ## Read in this order
 
@@ -26,7 +59,7 @@ investigation console at **http://127.0.0.1:8000**.
 
 Phase 4 adds exact repair previews, human approval/rejection, transactional repair
 enqueue, conditional access changes, receipt lookup after uncertainty, and verified
-business recovery. Local verification passes 77 unit contracts and all 14 Phase 4 PostgreSQL/HTTP
+business recovery. The Phase 4 verification record reports 77 unit contracts and all 14 PostgreSQL/HTTP
 scenarios, earlier-phase regressions, the frontend build and the browser approval
 walkthrough. See [Phase 4](docs/PHASE-4.md).
 The console keeps its classic layout with separate Cases and Integration health
@@ -55,6 +88,13 @@ restore checks, and a reproducible resource-limited local demo. See the
 [release runbook](docs/RELEASE-RUNBOOK.md) and [verification record](docs/PHASE-5.md).
 The broader release gate remains open. AI is a later read-only evaluated extension. User need is unvalidated;
 local fixture identities are not production authentication.
+
+The October 10 finishing pass adds a recorded process-death demonstration,
+distinct-purchase investigation measurements, and an engineering case study.
+It found and corrected delayed grace-boundary refreshes and stale resolved-case
+evidence during recovery. Current unit coverage is 83 contracts. The finishing
+record preserves both successful local measurements and failed workload/crash
+traces, with the regression checks and remaining limits.
 
 Local historical brainstorming and generated credentials/tools are ignored by
 Git. Use the planning documents above for the current scope. This repository is
