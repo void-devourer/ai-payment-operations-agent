@@ -20,7 +20,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from scripts.check_phase2 import Phase2IntegrationTests,WORKERS
 from backend.app.evidence import collect
-from backend.app.jobs import enqueue,fail,ReadFailure
+from backend.app.jobs import claim,enqueue,fail,ReadFailure
 from backend.app.reconciliation import schedule_page
 
 
@@ -247,6 +247,56 @@ class Phase3IntegrationTests(unittest.TestCase):
         self.login('owner_b')
         for path in ('/cases','/cases/'+case['case_id'],f"/purchases/{body['purchase_id']}/timeline",'/reconciliation'):
             self.assertEqual(self.http.get(base+path).status_code,403)
+
+
+    def test_11_grace_deadline_survives_without_another_event_or_scan(self):
+        body,intent=self.purchase()
+        collect(self.app,self.lease(intent))
+        with self.database.transaction('ws_a') as cursor:
+            cursor.execute("""SELECT j.state,j.due_at,s.first_confirmed_at FROM jobs j
+                JOIN success_clocks s USING(workspace_id,connection_id,payment_intent_id)
+                WHERE j.payment_intent_id=%s AND j.state='queued'""", (intent,))
+            timer=cursor.fetchone()
+        self.assertEqual(timer['due_at'],timer['first_confirmed_at']+timedelta(seconds=120))
+        self.assertIsNone(claim(self.database,'ws_a',intent=intent))
+        # Controlled integration clock boundary, matching both the eligibility
+        # clock and durable timer. No enqueue, HTTP hint or reconciliation scan.
+        self.admin('console',"UPDATE success_clocks SET first_confirmed_at=now()-interval '121 seconds' WHERE payment_intent_id=%s",(intent,))
+        self.admin('console',"""UPDATE jobs j SET due_at=s.first_confirmed_at+interval '120 seconds'
+            FROM success_clocks s WHERE j.workspace_id=s.workspace_id AND j.connection_id=s.connection_id
+            AND j.payment_intent_id=s.payment_intent_id AND j.payment_intent_id=%s""",(intent,))
+        job=claim(self.database,'ws_a',intent=intent)
+        self.assertIsNotNone(job)
+        collect(self.app,job)
+        self.assertEqual(self.cases(body['purchase_id'])[0]['discrepancy_code'],'PAID_ACCESS_MISSING')
+        with self.database.transaction('ws_a') as cursor:
+            cursor.execute('SELECT state FROM jobs WHERE job_id=%s',(job['job_id'],))
+            self.assertEqual(cursor.fetchone()['state'],'completed')
+
+    def test_12_new_hint_expedites_grace_timer_but_preserves_provider_backoff(self):
+        body,intent=self.purchase()
+        collect(self.app,self.lease(intent))
+        self.http.post(f'http://127.0.0.1:8002/internal/payments/{intent}/refunds',headers=self.headers(),
+            json={'resource_id':'grace_refund_'+uuid.uuid4().hex,'status':'succeeded','amount_minor':2500}).raise_for_status()
+        # An authentic success hint must lead to current refund evidence, not a grant.
+        self.send(self.event(intent)).raise_for_status()
+        job=claim(self.database,'ws_a',intent=intent)
+        self.assertIsNotNone(job)
+        collect(self.app,job)
+        self.assertEqual(self.cases(body['purchase_id'])[0]['discrepancy_code'],'REVERSAL_ACCESS_REVIEW')
+        other,other_intent=self.purchase()
+        lease=self.lease(other_intent)
+        fail(self.database,lease,ReadFailure('provider_throttled',delay=120))
+        with self.database.transaction('ws_a') as cursor:
+            cursor.execute('SELECT due_at FROM jobs WHERE job_id=%s',(lease['job_id'],))
+            due=cursor.fetchone()['due_at']
+        self.send(self.event(other_intent)).raise_for_status()
+        with self.database.transaction('ws_a') as cursor:
+            cursor.execute('SELECT state,due_at FROM jobs WHERE job_id=%s',(lease['job_id'],))
+            row=cursor.fetchone()
+        self.assertEqual(row['state'],'retry_wait')
+        self.assertEqual(row['due_at'],due)
+        self.assertIsNone(claim(self.database,'ws_a',intent=other_intent))
 
 
 if __name__=='__main__':

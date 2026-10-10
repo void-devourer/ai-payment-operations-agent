@@ -17,7 +17,8 @@ def enqueue(cursor, workspace, connection, intent):
     cursor.execute("""INSERT INTO jobs(workspace_id,job_id,connection_id,payment_intent_id)
         VALUES (%s,%s,%s,%s) ON CONFLICT (workspace_id,connection_id,payment_intent_id)
         WHERE state IN ('queued','leased','retry_wait') DO UPDATE
-        SET request_seq=jobs.request_seq+1, updated_at=now()
+        SET request_seq=jobs.request_seq+1, updated_at=now(),
+            due_at=CASE WHEN jobs.state='queued' THEN least(jobs.due_at,now()) ELSE jobs.due_at END
         RETURNING job_id""", (workspace, uuid.uuid4().hex, connection, intent))
     return cursor.fetchone()["job_id"]
 
@@ -57,11 +58,15 @@ def heartbeat(database, job):
         cursor.execute("UPDATE jobs SET lease_until=clock_timestamp()+interval '30 seconds' WHERE job_id=%s", (job["job_id"],))
 
 
-def finish(cursor, job):
+def finish(cursor, job, refresh_at=None):
     row = lock_owned(cursor, job)
-    state = "queued" if row["request_seq"] != row["claimed_seq"] else "completed"
-    cursor.execute("""UPDATE jobs SET state=%s,due_at=now(),attempts=0,last_error=NULL,
-        lease_token=NULL,lease_until=NULL,updated_at=now() WHERE job_id=%s""", (state,job["job_id"]))
+    changed = row["request_seq"] != row["claimed_seq"]
+    state = "queued" if changed or refresh_at is not None else "completed"
+    # New evidence hints take precedence over a grace timer. Provider backoff
+    # remains untouched in enqueue; failed reads still use fail(), not finish().
+    cursor.execute("""UPDATE jobs SET state=%s,due_at=coalesce(%s,now()),attempts=0,last_error=NULL,
+        lease_token=NULL,lease_until=NULL,updated_at=now() WHERE job_id=%s""",
+        (state,None if changed else refresh_at,job["job_id"]))
 
 
 def fail(database, job, error):

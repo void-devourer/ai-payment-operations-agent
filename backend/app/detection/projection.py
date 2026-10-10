@@ -13,7 +13,7 @@ from psycopg2.extras import Json
 
 from .policy import (AccessBinding,AccessEvidence,AccessStatus,Decision,Environment,
     EvidenceWindow,Outcome,PaymentEvidence,PaymentStatus,ProviderScope,Purchase,
-    POLICY_VERSION,evaluate_access)
+    POLICY_VERSION,PolicyConfig,evaluate_access)
 
 
 def material_fingerprint(facts):
@@ -90,6 +90,11 @@ def apply_observation(cursor,purchase,attempts,observation_id,facts,now):
     elif decision.outcome is Outcome.MANUAL_REVIEW:
         code='REVERSAL_ACCESS_REVIEW' if set(decision.reasons)&{'refund_history','dispute_history'} else 'PAYMENT_REVIEW'
     if code is None:
+        if decision.outcome is Outcome.PENDING and decision.reasons == ('fulfillment_grace_period',):
+            # A persistent due job wakes at the known boundary without requiring
+            # another webhook or waiting for the all-purchase sweep to reach it.
+            succeeded = next(row for row in facts['payments'] if row['status'] == 'succeeded')
+            return clocks[succeeded['payment_intent_id']] + PolicyConfig().grace_period
         return
     cursor.execute('SELECT state,fingerprint,generation FROM cases WHERE purchase_id=%s AND discrepancy_code=%s ORDER BY generation DESC LIMIT 1', (purchase_id,code))
     previous=cursor.fetchone()
