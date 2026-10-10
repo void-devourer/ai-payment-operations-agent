@@ -144,6 +144,14 @@ class Phase4IntegrationTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(Path(__file__).resolve()), '--crash-once', proposal['payload']['operation_id']], cwd=ROOT, capture_output=True, timeout=60)
         self.assertEqual(result.returncode, 73)
         self.assertEqual(self.access(body)['revision'], 1)
+        # Delivery/reconciliation can resolve the case before crash recovery.
+        # A second healthy read must keep its evidence current for verification.
+        self.refresh(intent)
+        self.assertEqual(self.cases(body['purchase_id'])[0]['state'], 'resolved')
+        self.refresh(intent)
+        detail = self.http.get(self.base + '/cases/' + case['case_id']).json()
+        self.assertTrue(detail['evidence_fresh'])
+        self.assertEqual(sum(row['action'] == 'resolve' for row in detail['audit']), 1)
         identifier = proposal['payload']['operation_id']
         self.admin('console', "UPDATE repair_operations SET lease_until=now()-interval '1 second',due_at=now() WHERE operation_id=%s", (identifier,))
         # Force all other fixture work out of this recovery round.

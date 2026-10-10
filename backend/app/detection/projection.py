@@ -71,7 +71,12 @@ def apply_observation(cursor,purchase,attempts,observation_id,facts,now):
     cursor.execute('INSERT INTO evaluations VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
         (workspace,observation_id,purchase_id,decision.policy_version,decision.outcome,Json(list(decision.reasons)),fingerprint,now))
     active_states=('open','awaiting_evidence','awaiting_approval','repair_in_progress','outcome_unknown')
-    cursor.execute("SELECT * FROM cases WHERE purchase_id=%s AND state=ANY(%s) FOR UPDATE",(purchase_id,list(active_states)))
+    # A normal delivery can resolve the case before uncertain repair recovery.
+    # Subsequent healthy reads must not leave that case behind the evidence head.
+    # Preserve terminal history when facts change; new discrepancies get new cases.
+    cursor.execute("""SELECT * FROM cases WHERE purchase_id=%s AND
+        (state=ANY(%s) OR (state='resolved' AND discrepancy_code='PAID_ACCESS_MISSING' AND %s))
+        FOR UPDATE""",(purchase_id,list(active_states),decision.outcome is Outcome.HEALTHY))
     for case in cursor.fetchall():
         state='awaiting_evidence' if decision.outcome is Outcome.AWAITING_EVIDENCE else 'open'
         if case['state'] in ('repair_in_progress','outcome_unknown'):
@@ -80,8 +85,9 @@ def apply_observation(cursor,purchase,attempts,observation_id,facts,now):
             state='awaiting_approval'
         if case['discrepancy_code']=='PAID_ACCESS_MISSING' and decision.outcome is Outcome.HEALTHY and case['state']!='outcome_unknown':
             state='resolved'
-            cursor.execute("INSERT INTO case_audit(workspace_id,audit_id,case_id,subject,action,reason,fingerprint) VALUES (%s,%s,%s,'system','resolve','Current authoritative access is active',%s)",
-                (workspace,uuid.uuid4().hex,case['case_id'],fingerprint))
+            if case['state']!='resolved':
+                cursor.execute("INSERT INTO case_audit(workspace_id,audit_id,case_id,subject,action,reason,fingerprint) VALUES (%s,%s,%s,'system','resolve','Current authoritative access is active',%s)",
+                    (workspace,uuid.uuid4().hex,case['case_id'],fingerprint))
         cursor.execute('UPDATE cases SET state=%s,latest_observation_id=%s,fingerprint=%s,updated_at=%s WHERE case_id=%s',
             (state,observation_id,fingerprint,now,case['case_id']))
     code=None
