@@ -141,10 +141,17 @@ it does not establish the original 10-workspace capacity or a freshness SLA.
 ```powershell
 python -m unittest discover -s tests/unit
 python scripts/check_docs.py
+python scripts/check_scheduling.py
 python scripts/check_phase5.py
 python scripts/benchmark_release.py --rate 25 --seconds 600
 python scripts/benchmark_release.py --rate 100 --seconds 30
 ```
+
+The October 11 worker uses independent workspace loops and foreground/background
+claim preferences, with migration 007 applied through the normal migration
+services. Both workspace heartbeat files must stay current. Investigation
+profiling, controlled backlog setup and measured limits are recorded in
+[PERFORMANCE-IMPROVEMENT.md](PERFORMANCE-IMPROVEMENT.md).
 
 The benchmark sends unique signed notifications about two actual simulated
 purchases across two fixed workspaces, with a 90/10 traffic split. It measures

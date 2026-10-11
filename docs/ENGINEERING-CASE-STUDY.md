@@ -48,7 +48,7 @@ sequenceDiagram
 | Dispatch marker before the call | After a crash, the console knows a call might have happened. A crash before the network call can therefore leave a conservative unknown outcome requiring operator investigation. |
 | Receipt lookup after uncertain dispatch | Recovery preserves the original identity and avoids a second dispatch. A missing receipt retains uncertainty rather than inventing a replacement operation. |
 | Fresh access observation after receipt | A historical grant receipt remains true even if access was subsequently suspended. Receipt existence alone cannot establish present business recovery. |
-| Per-workspace job rounds and request budgets | Work is bounded and scopes remain explicit. A single sequential worker can still delay another workspace during a slow read; round-robin order is not a latency guarantee. |
+| Per-workspace job rounds and request budgets | The initial sequential implementation let one workspace's budget wait delay the other. The October 11 correction uses two independent bounded loops, foreground/background preferences and unchanged request budgets. Claim-count preference is not a latency guarantee; see the performance record. |
 | Durable refresh at the grace deadline | The initial benchmark exposed delayed detection after grace. Reuse the leased job's `due_at` to schedule a follow-up, committed with observation publication. New queued-job notifications bring it forward; provider retry backoff remains intact. This adds a read and removes dependence on a future sweep, but cannot guarantee prompt service under overload. |
 
 Operation receipts are a familiar reliability technique. The contribution here is
@@ -115,3 +115,5 @@ freshness bound. Timeout/missing outcomes stay in the denominator.
 
 The measured limits and remaining scope are recorded in
 [PORTFOLIO-FINISH.md](PORTFOLIO-FINISH.md) and [PHASE-5.md](PHASE-5.md).
+The subsequent scheduling work is recorded in
+[PERFORMANCE-IMPROVEMENT.md](PERFORMANCE-IMPROVEMENT.md).

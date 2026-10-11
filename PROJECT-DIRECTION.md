@@ -76,6 +76,12 @@ runs, two corrective changes and reproduction commands are recorded in
 [docs/PORTFOLIO-FINISH.md](docs/PORTFOLIO-FINISH.md). Further product or AI scope
 requires a new discussion with the user.
 
+On October 11 the user approved starting the next improvement sequence.
+Performance profiling and scheduling are completed locally; UI, the evaluated
+assistant, and deployment remain separate following phases. See
+[docs/NEXT-IMPROVEMENTS.md](docs/NEXT-IMPROVEMENTS.md) and
+[docs/PERFORMANCE-IMPROVEMENT.md](docs/PERFORMANCE-IMPROVEMENT.md).
+
 ## Reading the historical context
 
 `overall context.txt` contains earlier brainstorming and conflicting alternatives.

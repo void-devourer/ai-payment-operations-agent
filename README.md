@@ -30,6 +30,8 @@ period. Credentials stay in the ignored local `.env` file.
   tradeoffs, recovery sequence, and questions the author should understand.
 - [Finishing evidence](docs/PORTFOLIO-FINISH.md): recorded crash demonstration,
   distinct-purchase investigation benchmark, and limitations.
+- [Scheduling investigation](docs/PERFORMANCE-IMPROVEMENT.md): real-worker
+  profiling, foreground/background scheduling, and controlled backlog results.
 - [Architecture](docs/ARCHITECTURE.md): database, worker, access adapter and API
   contracts; [domain vocabulary](CONTEXT.md) keeps payment and access distinct.
 
@@ -92,9 +94,16 @@ local fixture identities are not production authentication.
 The October 10 finishing pass adds a recorded process-death demonstration,
 distinct-purchase investigation measurements, and an engineering case study.
 It found and corrected delayed grace-boundary refreshes and stale resolved-case
-evidence during recovery. Current unit coverage is 83 contracts. The finishing
+evidence during recovery. That pass verified 83 unit contracts. The finishing
 record preserves both successful local measurements and failed workload/crash
 traces, with the regression checks and remaining limits.
+
+The October 11 performance phase separates workspace read loops, prioritizes
+fresh evidence with regular background turns, and prevents sweeps from dirtying
+leased reads or shortening grace timers. Unit coverage is now 85 contracts, with
+three additional PostgreSQL scheduling scenarios. See the scheduling investigation
+above for measured results and capacity limits. UI and evaluated AI work follow
+as separate phases.
 
 Local historical brainstorming and generated credentials/tools are ignored by
 Git. Use the planning documents above for the current scope. This repository is

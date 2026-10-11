@@ -1,0 +1,673 @@
+{
+  "started_at": "2026-10-11T09:46:35.569250+00:00",
+  "finished_at": "2026-10-11T09:48:05.733430+00:00",
+  "declared_seconds": 90,
+  "initial_job_counts": {
+    "ws_a": {
+      "retry_wait": 13,
+      "completed": 5902,
+      "dead": 1310,
+      "queued": 36
+    },
+    "ws_b": {
+      "leased": 1,
+      "completed": 4620,
+      "dead": 16,
+      "queued": 22
+    }
+  },
+  "timings": {
+    "database_transactions": {
+      "calls": 2545,
+      "seconds": 7.448109743000657
+    },
+    "sweep": {
+      "calls": 33,
+      "seconds": 0.1834961710000016
+    },
+    "reserve_request": {
+      "calls": 1725,
+      "seconds": 3.9104956069997456
+    },
+    "source_http": {
+      "calls": 370,
+      "seconds": 2.198895594000703
+    },
+    "bounded_source_read": {
+      "calls": 370,
+      "seconds": 75.36842362300052
+    },
+    "job_round_ws_a": {
+      "calls": 50,
+      "seconds": 35.604890738999984
+    },
+    "repair_round": {
+      "calls": 99,
+      "seconds": 0.18424863299964045
+    },
+    "job_round_ws_b": {
+      "calls": 49,
+      "seconds": 41.831071229000145
+    }
+  },
+  "claimed_reads": [
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 22.419444,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 51.351872,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 24.394522,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 53.322507,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 26.374749,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 55.33508,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 28.435441,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 58.166372,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 31.191014,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 60.899588,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 33.916885,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 62.818352,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 35.844263,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 64.206673,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 37.22606,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 65.582102,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 38.609868,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 67.529358,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 40.552522,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 69.483687,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 42.540769,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 71.462664,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 44.506528,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 73.436338,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 46.487998,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 75.407983,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 48.449084,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 77.381304,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 50.431304,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 82.108126,
+      "attempt": 2
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 53.230253,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 82.150673,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 50.645588,
+      "attempt": 3
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 83.570212,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 46.000729,
+      "attempt": 8
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 85.000006,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 46.579537,
+      "attempt": 8
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 86.409494,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 47.259107,
+      "attempt": 8
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 87.798633,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 48.437815,
+      "attempt": 8
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 89.204036,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 39.868429,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 87.864873,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 41.832669,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 89.830479,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 43.797935,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 27.579486,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 45.771046,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 29.563245,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 47.753007,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 31.548173,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 49.733379,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 33.50908,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 51.670073,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 35.462108,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 53.645403,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 37.433374,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 55.620967,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 38.854894,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 57.037258,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 40.818882,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 58.999807,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 42.784809,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 60.971028,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 44.760707,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 62.944476,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 46.733108,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 64.917859,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 48.42359,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 66.598613,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 50.383886,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 68.565297,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 52.355851,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 70.534401,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 54.325284,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 72.511309,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 56.293995,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 74.474283,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 58.259457,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 76.446013,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 60.24091,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 72.518305,
+      "attempt": 5
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 61.658861,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 63.880995,
+      "attempt": 2
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 61.138632,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 63.468469,
+      "attempt": 2
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 62.551453,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 42.402768,
+      "attempt": 7
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 63.959407,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 42.735415,
+      "attempt": 4
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 65.382062,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 43.759288,
+      "attempt": 7
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 66.783324,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 44.251346,
+      "attempt": 7
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 68.201946,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 43.908304,
+      "attempt": 7
+    },
+    {
+      "workspace": "ws_b",
+      "due_wait_seconds": 69.632947,
+      "attempt": 1
+    },
+    {
+      "workspace": "ws_a",
+      "due_wait_seconds": 44.552012,
+      "attempt": 7
+    }
+  ],
+  "profile": [
+    {
+      "function": "console_worker.py:31:main",
+      "calls": 1,
+      "self_seconds": 0.0029503990000000003,
+      "cumulative_seconds": 90.159474512
+    },
+    {
+      "function": "~:0:<built-in method time.sleep>",
+      "calls": 1404,
+      "self_seconds": 80.22870670200001,
+      "cumulative_seconds": 80.22870670200001
+    },
+    {
+      "function": "profile_worker.py:36:measured",
+      "calls": 2326,
+      "self_seconds": 0.02619478,
+      "cumulative_seconds": 77.80399041000001
+    },
+    {
+      "function": "profile_worker.py:70:one",
+      "calls": 100,
+      "self_seconds": 0.001334375,
+      "cumulative_seconds": 77.437710244
+    },
+    {
+      "function": "console_worker.py:18:run_one",
+      "calls": 99,
+      "self_seconds": 0.0024344690000000003,
+      "cumulative_seconds": 77.43518583800001
+    },
+    {
+      "function": "evidence.py:172:collect",
+      "calls": 99,
+      "self_seconds": 0.009905879000000001,
+      "cumulative_seconds": 76.761367976
+    },
+    {
+      "function": "evidence.py:37:get",
+      "calls": 370,
+      "self_seconds": 0.044281869,
+      "cumulative_seconds": 75.36670544200001
+    },
+    {
+      "function": "evidence.py:104:reversals",
+      "calls": 168,
+      "self_seconds": 0.0024855800000000003,
+      "cumulative_seconds": 46.093952007000006
+    },
+    {
+      "function": "~:0:<built-in method builtins.next>",
+      "calls": 23309,
+      "self_seconds": 0.034149348,
+      "cumulative_seconds": 6.907022229000001
+    },
+    {
+      "function": "profile_worker.py:46:transaction",
+      "calls": 5090,
+      "self_seconds": 0.036341964000000004,
+      "cumulative_seconds": 4.851218206
+    },
+    {
+      "function": "database.py:30:transaction",
+      "calls": 5090,
+      "self_seconds": 0.037286773,
+      "cumulative_seconds": 4.77666675
+    },
+    {
+      "function": "extras.py:233:execute",
+      "calls": 7515,
+      "self_seconds": 0.026771511,
+      "cumulative_seconds": 4.008462526000001
+    },
+    {
+      "function": "~:0:<function RealDictCursor.execute at 0x74d13be9af20>",
+      "calls": 7515,
+      "self_seconds": 3.926474191,
+      "cumulative_seconds": 3.9816910150000004
+    },
+    {
+      "function": "jobs.py:86:reserve_request",
+      "calls": 1725,
+      "self_seconds": 0.025006538000000002,
+      "cumulative_seconds": 3.892267072
+    },
+    {
+      "function": "contextlib.py:136:__enter__",
+      "calls": 11219,
+      "self_seconds": 0.015810418,
+      "cumulative_seconds": 3.8888423970000003
+    },
+    {
+      "function": "contextlib.py:145:__exit__",
+      "calls": 11218,
+      "self_seconds": 0.019679533000000003,
+      "cumulative_seconds": 3.050311947
+    },
+    {
+      "function": "~:0:<method '__exit__' of 'psycopg2.extensions.connection' objects>",
+      "calls": 2545,
+      "self_seconds": 2.898894148,
+      "cumulative_seconds": 2.898894148
+    },
+    {
+      "function": "evidence.py:90:current_payment",
+      "calls": 103,
+      "self_seconds": 0.001663041,
+      "cumulative_seconds": 2.166485347
+    },
+    {
+      "function": "profile_worker.py:76:stream",
+      "calls": 740,
+      "self_seconds": 0.004406997,
+      "cumulative_seconds": 2.0456907540000002
+    },
+    {
+      "function": "_client.py:827:stream",
+      "calls": 740,
+      "self_seconds": 0.0035576920000000003,
+      "cumulative_seconds": 2.036107968
+    }
+  ],
+  "scope": "Actual sequential worker process with diagnostic wrappers. Timings overlap; do not sum them. No admin writes or changed request budgets."
+}

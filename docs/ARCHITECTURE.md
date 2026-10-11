@@ -248,8 +248,14 @@ Jobs execute at least once. Their effects are protected by operation identity,
 conditional writes, and target receipts. A local lease alone cannot prevent an
 old worker's in-flight HTTP request from reaching the remote app.
 
-Dispatch with bounded concurrency and tenant fairness, initially round-robin
-eligible workspaces with per-workspace claim caps. Rate-limit provider work by
+The October 11 scheduling change uses one independent loop per configured
+workspace, each with its own HTTP client and scan pacing, in one resource-limited
+worker container. Four claim turns prefer foreground hints/deadlines and the
+fifth prefers background sweep work, with fallback to available eligible jobs.
+Background coalescing does not dirty a leased observation or shorten a timer.
+Both workspace heartbeats must remain current. This is bounded local
+concurrency and claim-count preference, not a distributed or wall-clock fairness
+guarantee. Request budgets remain atomic in PostgreSQL. Rate-limit provider work by
 connection, honor provider retry guidance, and use bounded backoff with jitter.
 Separate permanent validation/permission incompatibility from retryable provider
 timeouts/429s/5xx. After the attempt limit, expose a dead job and retain recovery
