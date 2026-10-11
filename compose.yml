@@ -129,7 +129,7 @@ services:
     environment: *console-env
     command: ["python", "-m", "backend.app.console_worker"]
     healthcheck:
-      test: ["CMD", "python", "-c", "import os,time; p='/tmp/console-worker-heartbeat'; assert os.path.exists(p) and 0 <= time.time()-os.path.getmtime(p) < 60"]
+      test: ["CMD", "python", "-c", "import os,time; assert all(os.path.exists(p) and 0 <= time.time()-os.path.getmtime(p) < 60 for p in ['/tmp/console-worker-heartbeat-ws_a','/tmp/console-worker-heartbeat-ws_b'])"]
       interval: 5s
       timeout: 3s
       retries: 12

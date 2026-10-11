@@ -13,17 +13,24 @@ class ReadFailure(Exception):
         self.code, self.retryable, self.delay = code, retryable, delay
 
 
-def enqueue(cursor, workspace, connection, intent):
-    cursor.execute("""INSERT INTO jobs(workspace_id,job_id,connection_id,payment_intent_id)
-        VALUES (%s,%s,%s,%s) ON CONFLICT (workspace_id,connection_id,payment_intent_id)
+def enqueue(cursor, workspace, connection, intent, *, foreground=True):
+    cursor.execute("""INSERT INTO jobs(workspace_id,job_id,connection_id,payment_intent_id,foreground)
+        VALUES (%s,%s,%s,%s,%s) ON CONFLICT (workspace_id,connection_id,payment_intent_id)
         WHERE state IN ('queued','leased','retry_wait') DO UPDATE
-        SET request_seq=jobs.request_seq+1, updated_at=now(),
+        SET request_seq=jobs.request_seq+1, updated_at=now(),foreground=true,
             due_at=CASE WHEN jobs.state='queued' THEN least(jobs.due_at,now()) ELSE jobs.due_at END
-        RETURNING job_id""", (workspace, uuid.uuid4().hex, connection, intent))
-    return cursor.fetchone()["job_id"]
+        WHERE EXCLUDED.foreground RETURNING job_id""", (workspace, uuid.uuid4().hex, connection, intent,foreground))
+    row=cursor.fetchone()
+    if row is None:
+        # Background scheduling coalesces with existing work, without dirtying
+        # an in-flight read, shortening a timer, or resetting provider backoff.
+        cursor.execute("""SELECT job_id FROM jobs WHERE connection_id=%s AND payment_intent_id=%s
+            AND state IN ('queued','leased','retry_wait')""",(connection,intent))
+        row=cursor.fetchone()
+    return row["job_id"]
 
 
-def claim(database, workspace, intent=None):
+def claim(database, workspace, intent=None, *, foreground_first=True):
     with database.transaction(workspace) as cursor:
         # Exhausted crashed workers become visible dead jobs rather than looping forever.
         cursor.execute("""UPDATE jobs SET state='dead',last_error='attempt_limit',lease_token=NULL,
@@ -32,7 +39,7 @@ def claim(database, workspace, intent=None):
         cursor.execute("""SELECT * FROM jobs WHERE attempts < %s AND (%s IS NULL OR payment_intent_id=%s) AND
             ((state IN ('queued','retry_wait') AND due_at<=now()) OR
              (state='leased' AND lease_until<=now()))
-            ORDER BY due_at,created_at,job_id FOR UPDATE SKIP LOCKED LIMIT 1""", (MAX_ATTEMPTS,intent,intent))
+            ORDER BY (foreground=%s) DESC,due_at,created_at,job_id FOR UPDATE SKIP LOCKED LIMIT 1""", (MAX_ATTEMPTS,intent,intent,foreground_first))
         job = cursor.fetchone()
         if job is None:
             return None
@@ -65,8 +72,9 @@ def finish(cursor, job, refresh_at=None):
     # New evidence hints take precedence over a grace timer. Provider backoff
     # remains untouched in enqueue; failed reads still use fail(), not finish().
     cursor.execute("""UPDATE jobs SET state=%s,due_at=coalesce(%s,now()),attempts=0,last_error=NULL,
+        foreground=foreground OR %s,
         lease_token=NULL,lease_until=NULL,updated_at=now() WHERE job_id=%s""",
-        (state,None if changed else refresh_at,job["job_id"]))
+        (state,None if changed else refresh_at,refresh_at is not None,job["job_id"]))
 
 
 def fail(database, job, error):

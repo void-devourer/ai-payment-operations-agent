@@ -131,7 +131,9 @@ class ReleaseTests(unittest.TestCase):
         with psycopg2.connect(url) as connection:
             with connection.cursor() as cursor:
                 cursor.execute('SELECT count(*) FROM schema_migrations')
-                self.assertEqual(cursor.fetchone()[0], 6)
+                self.assertEqual(cursor.fetchone()[0],len(list((ROOT / 'infra/migrations/console').glob('*.sql'))))
+                cursor.execute("SELECT column_default FROM information_schema.columns WHERE table_name='jobs' AND column_name='foreground'")
+                self.assertEqual(cursor.fetchone()[0],'false')
                 cursor.execute("UPDATE schema_migrations SET digest='tampered' WHERE version='001_foundation.sql'")
         with self.assertRaises(ValueError):
             migrate('console', url)

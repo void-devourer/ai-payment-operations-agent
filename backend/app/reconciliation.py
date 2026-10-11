@@ -41,7 +41,7 @@ def schedule_page(database,workspace,connection_id,*,force=False):
                 unbound+=1
             elif attempts:
                 # One job reads all trusted attempts; no need to enqueue N equivalent reads.
-                enqueue(cursor,workspace,connection_id,attempts[0]['payment_intent_id'])
+                enqueue(cursor,workspace,connection_id,attempts[0]['payment_intent_id'],foreground=False)
         complete=len(page)<=PAGE_SIZE
         cursor.execute("""UPDATE reconciliation_runs SET after_purchase_id=%s,
             scheduled_purchases=scheduled_purchases+%s,unbound_purchases=unbound_purchases+%s,
