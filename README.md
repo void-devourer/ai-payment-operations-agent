@@ -1,13 +1,35 @@
-# Payment Reliability & Reconciliation Console
+# Scope & Pay
+
+Active product: turn a freelance client's scope changes into a reviewed proposal,
+explicit client acceptance and a tracked invoice. The new workspace lives at
+**http://127.0.0.1:8000/**; the earlier payment console remains at `/operations`.
+
+Start with the [Scope & Pay setup and demo](docs/SCOPE-DEMO.md),
+[product contract](docs/SCOPE-CONTRACT.md) and [AI contract](docs/SCOPE-AI-SPEC.md).
+See the [current architecture](docs/SCOPE-ARCHITECTURE.md) for authority and recovery.
+The local workflow needs no provider account. Its sample review and invoice
+payments are labelled simulations. Real OpenAI analysis and PayPal sandbox draft
+invoicing are optional adapters; real-provider acceptance remains pending.
+
+The sections below record the earlier payment-reliability implementation.
+
+The default deployment uses the independent simulator. An optional PayPal sandbox
+integration now provides typed order/capture bindings, scoped reads, verified
+webhook ingestion and investigation cases. Its 27 unit contracts and nine real
+PostgreSQL fixture checks pass offline. Real account acceptance, AI implementation
+and measured AI evaluation remain pending. PayPal access repair is disabled.
+Use the [PayPal setup guide](docs/PAYPAL-SETUP.md) and
+[AI design draft](docs/AI-SPEC.md) to follow the new work; the
+[H2 verification record](docs/PAYPAL-VERIFICATION.md) separates offline results
+from pending real-provider acceptance.
 
 Software project for investigating successful payments that did
 not produce the expected access in a business application, with controlled,
 human-approved repair and verified recovery.
 
-The primary career focus is software engineering. A read-only, evaluated AI
-investigation assistant is an optional future extension. The current deliverable
-is a reproducible local reliability demonstration, with a bounded finishing
-scope accepted on October 10. Data Reliability & Replay / TraceBack is a separate
+The primary career focus is software engineering. The existing deliverable is a
+reproducible local reliability demonstration; the hackathon adaptation is in
+progress. Data Reliability & Replay / TraceBack is a separate
 candidate and is not implemented in this workspace.
 
 ## Try the local demo
@@ -21,7 +43,7 @@ exceptions through investigation and approved application-access repair.
 python scripts/demo.py --scenario missing-access
 ```
 
-Open **http://127.0.0.1:8000** and review the generated case after its real grace
+Open **http://127.0.0.1:8000/operations** and review the generated case after its real grace
 period. Credentials stay in the ignored local `.env` file.
 
 ## Engineering walkthrough
@@ -65,7 +87,12 @@ business recovery. The Phase 4 verification record reports 77 unit contracts and
 scenarios, earlier-phase regressions, the frontend build and the browser approval
 walkthrough. See [Phase 4](docs/PHASE-4.md).
 The console keeps its classic layout with separate Cases and Integration health
-pages. Owner/operator actions require a fresh session and current evidence.
+pages. Login survives refresh with a seven-day renewable local idle session.
+Sensitive changes require identity confirmation within 30 minutes and current evidence.
+The October 11 [UI improvement](docs/UI-IMPROVEMENT.md) adds a dedicated
+investigation view, grouped history, readable labels, dismissible notifications,
+session restoration, and a real source check with a disabled cooldown countdown.
+Stored results update automatically.
 
 Run the local checks after the [setup guide](docs/LOCAL-DEVELOPMENT.md):
 

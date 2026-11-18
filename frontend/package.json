@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "tsc --ignoreConfig src/api.ts --target es2022 --module es2022 --outDir ../.local/frontend-tests --skipLibCheck && node --test ../tests/frontend/session-flow.test.mjs && tsc --ignoreConfig src/scope/api.ts --target es2022 --module es2022 --outDir ../.local/frontend-scope-tests --skipLibCheck && node --test src/scope/api.test.mjs"
   },
   "dependencies": {"react": "19.3.0", "react-dom": "19.3.0"},
   "devDependencies": {"@types/react": "19.3.0", "@types/react-dom": "19.3.0", "typescript": "7.0.2", "vite": "8.3.4"}

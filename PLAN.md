@@ -1,5 +1,17 @@
 # Payment Reliability & Reconciliation Console
 
+**2026-10-15:** the active product is now Scope & Pay. Use its
+[execution contract](docs/SCOPE-CONTRACT.md) and [demo guide](docs/SCOPE-DEMO.md).
+This file retains the prior payment-console phases and their historical evidence.
+
+**2026-10-14 active scope:** the user approved the PayPal AI Hackathon adaptation
+and selected OpenAI. [The hackathon plan](docs/PAYPAL-HACKATHON-PLAN.md) governs
+new implementation. The historical phases and acceptance evidence below remain
+reference material; their production gates are not closed by the scope change.
+H2's optional PayPal investigation path is implemented and verified offline as
+of October 15; [the verification record](docs/PAYPAL-VERIFICATION.md) lists results
+and remaining real-account gates. H3 implements and evaluates the OpenAI assistant.
+
 Build plan · updated 2026-10-10 · Local finishing pass; original release gates remain open
 
 **2026-10-10 scope decision:** the user accepted a bounded local portfolio

@@ -1,6 +1,7 @@
 """Opaque server-side sessions and purpose/workspace-bound service credentials."""
 
 import hmac
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, Request
 
@@ -18,14 +19,19 @@ def service_workspace(request: Request, purpose: str) -> str:
     raise HTTPException(401, "Invalid service credential")
 
 
-def actor(request: Request, workspace: str, write: bool = False) -> str:
+def csrf_token(request: Request, token: str) -> str:
+    return hmac.new(request.app.state.settings.demo_login_key.encode(),
+                    ('csrf:' + token).encode(), 'sha256').hexdigest()
+
+
+def actor(request: Request, workspace: str, write: bool = False, recent: bool = False) -> str:
     token = request.cookies.get("payment_session", "")
     if not token or len(token) > 128:
         raise HTTPException(401, "Session required")
     database = request.app.state.database
     with database.transaction() as cursor:
         cursor.execute(
-            "SELECT subject, csrf_digest FROM sessions WHERE token_digest=%s AND expires_at > now()",
+            "SELECT subject, csrf_digest, authenticated_at FROM sessions WHERE token_digest=%s AND expires_at > now()",
             (digest(token),),
         )
         session = cursor.fetchone()
@@ -42,4 +48,6 @@ def actor(request: Request, workspace: str, write: bool = False) -> str:
         csrf = request.headers.get("X-CSRF-Token", "")
         if not csrf or not hmac.compare_digest(digest(csrf), session["csrf_digest"]):
             raise HTTPException(403, "CSRF token required")
+        if recent and session['authenticated_at'] < datetime.now(UTC) - timedelta(minutes=30):
+            raise HTTPException(428, "Confirm your identity to continue")
     return session["subject"]

@@ -30,6 +30,8 @@ jobs:
           python -m unittest discover -s tests/unit -v
       - name: Verify documentation links and requirement coverage
         run: python scripts/check_docs.py
+      - name: Verify offline scope AI structural fixtures
+        run: python scripts/evaluate_scope_ai.py
 
   postgres-integration:
     runs-on: ubuntu-latest
@@ -49,16 +51,24 @@ jobs:
         run: docker compose --progress plain up -d --build --quiet-pull --wait --wait-timeout 180
       - name: Verify database and service contracts
         run: python scripts/check_phase1.py
+      - name: Verify session restoration and identity confirmation
+        run: python scripts/check_session_flow.py
       - name: Verify console outage recovery
         run: python scripts/check_outage.py
       - name: Verify durable ingestion, evidence and worker recovery
         run: python scripts/check_phase2.py
       - name: Verify offline Stripe contracts against PostgreSQL
         run: python scripts/check_stripe_contracts.py
+      - name: Verify offline PayPal investigation and webhook contracts against PostgreSQL
+        run: python scripts/check_paypal_contracts.py
+      - name: Verify scope proposals, client consent and invoice recovery against PostgreSQL
+        run: python scripts/check_scope_workflow.py
       - name: Verify detection, reconciliation and case safety
         run: python scripts/check_phase3.py
       - name: Verify foreground scheduling and sweep coalescing
         run: python scripts/check_scheduling.py
+      - name: Verify scoped operator checks and durable request limits
+        run: python scripts/check_operator_checks.py
       - name: Verify approval, access repair and unknown-outcome recovery
         run: python scripts/check_phase4.py
       - name: Verify release security, previous schema and isolated restore

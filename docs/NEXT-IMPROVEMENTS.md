@@ -1,12 +1,23 @@
 # Performance, operator experience, and investigation assistant
 
+**October 14 update:** active work now follows the
+[PayPal hackathon plan](PAYPAL-HACKATHON-PLAN.md). The existing performance/UI
+work remains the baseline. The assistant uses the draft [AI design](AI-SPEC.md),
+and PayPal integration uses [sandbox setup](PAYPAL-SETUP.md).
+**October 15:** H2's provider wiring is verified offline; see
+[the verification record](PAYPAL-VERIFICATION.md). OpenAI implementation and
+measured evaluation are the next development phase; genuine PayPal acceptance
+remains pending account access.
+
 Scope draft, 2026-10-10; performance completed locally 2026-10-11 after the
 user approved starting. This records the improvement sequence requested by the user.
 The previous bounded local finishing pass is complete; this document does not
 declare these improvements implemented or authorize public deployment.
 
 Performance progress and evidence: [PERFORMANCE-IMPROVEMENT.md](PERFORMANCE-IMPROVEMENT.md).
-UI and AI implementation remain separate upcoming phases.
+UI and operator checks are implemented: [UI-IMPROVEMENT.md](UI-IMPROVEMENT.md).
+AI implementation remains an upcoming phase. The problem list below records
+the original starting state; the UI report records what has changed.
 
 ## Concrete problems
 

@@ -15,6 +15,7 @@ from .evidence import collect
 from .jobs import ReadFailure, claim, fail
 from .reconciliation import schedule_page
 from .repairs import run_repair
+from .scope_invoice_worker import run_once as run_scope_invoice
 
 
 def run_one(app,workspace,*,foreground_first=True):
@@ -43,6 +44,7 @@ def run_workspace(settings,database,workspace,stop,marker):
             marker.touch()
             if time.monotonic()>=next_scan:
                 connections=[f'sim_{workspace}']+([f'stripe_{workspace}'] if workspace in settings.stripe else [])
+                if workspace in getattr(settings,'paypal',{}): connections.append(f'paypal_{workspace}')
                 for connection_id in connections:
                     schedule_page(database,workspace,connection_id)
                 next_scan=time.monotonic()+1
@@ -51,6 +53,7 @@ def run_workspace(settings,database,workspace,stop,marker):
             run_one(app,workspace,foreground_first=rounds%5!=4)
             rounds+=1
             run_repair(app,workspace)
+            run_scope_invoice(app,workspace)
             marker.touch()
             stop.wait(.25)
 
@@ -64,6 +67,9 @@ def main():
     try:
         if settings.stripe:
             from .stripe_provider import configure_connections
+            configure_connections(database,settings)
+        if getattr(settings,'paypal',{}):
+            from .paypal_provider import configure_connections
             configure_connections(database,settings)
         # Configuration contains two local workspaces: fixed bounded concurrency.
         with ThreadPoolExecutor(max_workers=len(settings.keys)) as pool:

@@ -19,6 +19,8 @@ from .policy import (AccessBinding,AccessEvidence,AccessStatus,Decision,Environm
 def material_fingerprint(facts):
     # Read time, generation, pagination and transport errors are not material facts.
     material={key:facts.get(key) for key in ('scope','registered_attempts','payments','refunds','disputes','access')}
+    if facts.get('provider')=='paypal':
+        material.update({key:facts.get(key) for key in ('orders','registered_resources','coverage','capabilities')})
     # Simulator revision counters establish read consistency, not new findings.
     material['payments']=[{k:v for k,v in row.items() if k not in ('reversal_generation','latest_charge')}
         for row in facts.get('payments',[])]
@@ -28,6 +30,9 @@ def material_fingerprint(facts):
 
 
 def decision_for(purchase,attempts,facts,clocks,scope,now):
+    if purchase['connection_id'].startswith('paypal_'):
+        from ..paypal_investigation import decision_for as paypal_decision
+        return paypal_decision(purchase,facts,scope,now)
     try:
         binding=AccessBinding(*(purchase[key] for key in ('workspace_id','purchase_id','customer_id','product_id')))
         trusted=ProviderScope(purchase['workspace_id'],purchase['connection_id'],scope['account_id'],Environment(scope['environment']))
@@ -58,7 +63,8 @@ def apply_observation(cursor,purchase,attempts,observation_id,facts,now):
     workspace,purchase_id=purchase['workspace_id'],purchase['purchase_id']
     cursor.execute('SELECT account_id,environment FROM connections WHERE connection_id=%s',(purchase['connection_id'],))
     scope=dict(cursor.fetchone())
-    if facts.get('payment_complete') is True and facts.get('registered_attempts')==attempts:
+    paypal=purchase['connection_id'].startswith('paypal_')
+    if not paypal and facts.get('payment_complete') is True and facts.get('registered_attempts')==attempts:
         for payment in facts['payments']:
             if payment['status']=='succeeded' and payment['payment_intent_id'] in attempts:
                 cursor.execute("""INSERT INTO success_clocks VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""",
@@ -95,6 +101,8 @@ def apply_observation(cursor,purchase,attempts,observation_id,facts,now):
         code='PAID_ACCESS_MISSING'
     elif decision.outcome is Outcome.MANUAL_REVIEW:
         code='REVERSAL_ACCESS_REVIEW' if set(decision.reasons)&{'refund_history','dispute_history'} else 'PAYMENT_REVIEW'
+    elif paypal and decision.outcome is Outcome.AWAITING_EVIDENCE:
+        code='PAYMENT_REVIEW'
     if code is None:
         if decision.outcome is Outcome.PENDING and decision.reasons == ('fulfillment_grace_period',):
             # A persistent due job wakes at the known boundary without requiring
@@ -107,6 +115,7 @@ def apply_observation(cursor,purchase,attempts,observation_id,facts,now):
     if previous and (previous['state'] in active_states or
                      previous['state']=='dismissed' and previous['fingerprint']==fingerprint):
         return
-    cursor.execute('INSERT INTO cases VALUES (%s,%s,%s,%s,%s,\'open\',%s,%s,%s,%s,%s)',
+    cursor.execute('INSERT INTO cases VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
         (workspace,uuid.uuid4().hex,purchase_id,code,previous['generation']+1 if previous else 1,
+         'awaiting_evidence' if decision.outcome is Outcome.AWAITING_EVIDENCE else 'open',
          fingerprint,observation_id,observation_id,now,now))

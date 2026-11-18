@@ -170,6 +170,9 @@ def publish(database,job,purchase,attempts,generation,facts,started,finished,err
 
 
 def collect(app,job):
+    if job['connection_id'].startswith('paypal_'):
+        from .paypal_investigation import collect as collect_paypal
+        return collect_paypal(app,job)
     purchase,attempts,generation=begin(app.state.database,job)
     settings=app.state.settings
     reader=Reader(app,job)

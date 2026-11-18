@@ -7,7 +7,7 @@ access. Newly registered rows after the cutoff are included in the next sweep.
 
 import uuid
 
-from .jobs import enqueue
+from .jobs import enqueue,enqueue_purchase
 
 PAGE_SIZE=20
 INTERVAL_SECONDS=60
@@ -35,6 +35,11 @@ def schedule_page(database,workspace,connection_id,*,force=False):
         page=cursor.fetchall()
         unbound=0
         for purchase in page[:PAGE_SIZE]:
+            if connection_id.startswith('paypal_'):
+                cursor.execute('SELECT 1 FROM paypal_orders WHERE purchase_id=%s LIMIT 1',(purchase['purchase_id'],))
+                if cursor.fetchone(): enqueue_purchase(cursor,workspace,connection_id,purchase['purchase_id'],foreground=False)
+                else: unbound+=1
+                continue
             cursor.execute('SELECT payment_intent_id FROM payment_attempts WHERE purchase_id=%s ORDER BY payment_intent_id LIMIT 21', (purchase['purchase_id'],))
             attempts=cursor.fetchall()
             if not attempts or len(attempts)>20:

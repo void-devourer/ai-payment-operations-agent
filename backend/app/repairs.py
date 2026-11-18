@@ -75,7 +75,7 @@ def has_active(cursor, purchase):
 
 @router.post('/api/workspaces/{workspace}/cases/{case_id}/proposals')
 def propose(workspace: Identifier, case_id: Identifier, body: Dismissal, request: Request):
-    subject = actor(request, workspace, write=True)
+    subject = actor(request, workspace, write=True, recent=True)
     if len(body.reason.strip()) < 5:
         raise HTTPException(422, 'A meaningful reason is required')
     with request.app.state.database.transaction(workspace, subject) as cursor:
@@ -143,7 +143,7 @@ def history(workspace: Identifier, case_id: Identifier, request: Request):
 
 @router.post('/api/workspaces/{workspace}/proposals/{proposal_id}/decisions')
 def decide(workspace: Identifier, proposal_id: Identifier, body: ProposalDecision, request: Request):
-    subject = actor(request, workspace, write=True)
+    subject = actor(request, workspace, write=True, recent=True)
     if len(body.reason.strip()) < 5:
         raise HTTPException(422, 'A meaningful reason is required')
     with request.app.state.database.transaction(workspace, subject) as cursor:
@@ -405,7 +405,7 @@ def run_repair(app, workspace):
 
 @router.post('/api/workspaces/{workspace}/operations/{operation_id}/recover')
 def recover(workspace: Identifier, operation_id: Identifier, request: Request):
-    subject = actor(request, workspace, write=True)
+    subject = actor(request, workspace, write=True, recent=True)
     with request.app.state.database.transaction(workspace, subject) as cursor:
         cursor.execute('SELECT * FROM repair_operations WHERE operation_id=%s FOR UPDATE', (operation_id,))
         row = cursor.fetchone()

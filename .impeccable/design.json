@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T21:19:02.080725+00:00",
+  "title": "Design System: Scope & Pay",
+  "extensions": {
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page names; project and mobile variants are described in DESIGN.md."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings with contextual variants."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Source words, scope descriptions and form content."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Visible field labels."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state-color",
+        "value": "background-color 160ms, border-color 160ms",
+        "purpose": "Short control feedback; removed for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-desktop",
+        "value": "1800px"
+      },
+      {
+        "name": "compact-desktop",
+        "value": "1200px"
+      },
+      {
+        "name": "stacked-reading",
+        "value": "1000px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "narrow-mobile",
+        "value": "380px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "description": "Explicit primary action.",
+      "html": "<button class=\"ds-primary\">Save proposal</button>",
+      "css": ".ds-primary{font:700 16px/1.4 Arial,'Helvetica Neue',sans-serif;border:1px solid #c7cacf;border-radius:999px;padding:11px 22px;min-height:44px;cursor:pointer;transition:background-color 160ms,border-color 160ms;background:#080a0d;color:#fff;border-color:#080a0d}.ds-primary:hover{background:#272a2f;border-color:#272a2f}.ds-primary:focus-visible{outline:3px solid #0070e0;outline-offset:3px}.ds-primary:disabled{background:#e7ebee;border-color:#d0d8df;color:#5b6b78;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "description": "Supporting action.",
+      "html": "<button class=\"ds-secondary\">View project</button>",
+      "css": ".ds-secondary{font:700 16px/1.4 Arial,'Helvetica Neue',sans-serif;border:1px solid #c7cacf;border-radius:999px;padding:11px 22px;min-height:44px;cursor:pointer;transition:background-color 160ms,border-color 160ms;background:#fff;color:#111316}.ds-secondary:hover{background:#edf2f5;border-color:#899cab}.ds-secondary:active{background:#e0e8ed}.ds-secondary:focus-visible{outline:3px solid #0070e0;outline-offset:3px}.ds-secondary:disabled{background:#e7ebee;border-color:#d0d8df;color:#5b6b78;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}",
+      "refersTo": "button-secondary"
+    },
+    {
+      "name": "Labelled field",
+      "kind": "input",
+      "description": "Visible labels and native fields.",
+      "html": "<label class=\"ds-label\" for=\"ds-project\">Project name</label><input class=\"ds-field\" id=\"ds-project\" placeholder=\"Northstar website\">",
+      "css": ".ds-label{display:block;font:600 16px/1.55 Arial,sans-serif;color:#111316;margin-bottom:7px}.ds-field{display:block;width:100%;font:400 16px/1.4 Arial,sans-serif;padding:11px 12px;border:1px solid #aeb3ba;border-radius:8px;min-height:44px;background:#fff;color:#111316}.ds-field::placeholder{color:#656b75;opacity:1}.ds-field:focus-visible{outline:3px solid #0070e0;outline-offset:3px}",
+      "refersTo": "input"
+    },
+    {
+      "name": "Selected navigation",
+      "kind": "nav",
+      "description": "Pale blue current-page treatment with an outline icon.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-nav\" aria-current=\"page\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8\"/></svg>Home</button></nav>",
+      "css": ".ds-rail{background:#f5f7fa;padding:12px}.ds-nav{display:flex;align-items:center;gap:15px;width:100%;font:600 16px/1.4 Arial,sans-serif;color:#003087;background:#c6dcff;border:1px solid transparent;border-radius:14px;min-height:56px;padding:14px 17px;cursor:pointer}.ds-nav:focus-visible{outline:3px solid #0070e0;outline-offset:3px}"
+    },
+    {
+      "name": "Positive status",
+      "kind": "chip",
+      "description": "A labelled affirmative state.",
+      "html": "<span class=\"ds-status\">Accepted</span>",
+      "css": ".ds-status{display:inline-flex;align-items:center;font:600 13px/1.45 Arial,sans-serif;padding:4px 10px;border-radius:6px;background:#e6f0e9;color:#28583e}",
+      "refersTo": "tag-success"
+    },
+    {
+      "name": "Agreement summary",
+      "kind": "card",
+      "description": "Quiet context beside source review.",
+      "html": "<section class=\"ds-summary\"><h2>Original agreement</h2><p>Website design and two revision rounds.</p></section>",
+      "css": ".ds-summary{background:#f5f7fa;color:#111316;border:1px solid #e2e5e9;border-radius:14px;padding:26px;font:400 16px/1.55 Arial,sans-serif}.ds-summary h2{font-size:22px;line-height:1.25;font-weight:700;letter-spacing:-.025em;margin:0 0 14px}.ds-summary p{margin:0 0 16px}",
+      "refersTo": "agreement-summary"
+    },
+    {
+      "name": "Source quotation",
+      "kind": "button",
+      "description": "Opens the original words behind a scope interpretation.",
+      "html": "<button class=\"ds-source\">Please add a booking form.<small>View original message</small></button>",
+      "css": ".ds-source{display:block;width:100%;text-align:left;font:400 16px/1.6 Arial,sans-serif;background:#f7f9fc;color:#263e5b;border:1px solid #dfe5ed;border-radius:10px;padding:16px 18px;cursor:pointer;transition:background-color 160ms,border-color 160ms}.ds-source:hover{background:#edf4ff;border-color:#9db6d7}.ds-source:active{background:#e0e8ed}.ds-source:focus-visible{outline:3px solid #0070e0;outline-offset:3px}.ds-source small{display:block;font-size:12px;line-height:1.6;color:#526c82;margin-top:6px}@media(prefers-reduced-motion:reduce){.ds-source{transition:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "PayPal-inspired business workspace",
+    "overview": "The approved PayPal sandbox dashboard reference supplies the visual language: pale navigation, white content, strong black type, pill actions and blue selected states. Scope & Pay keeps its own identity and a basic, classic, organized interface without flashy effects.\n\nThe workspace and client review share readable forms, quiet boundaries and clear human decisions. Source words, proposed scope, exact prices and provider state remain distinguishable.",
+    "keyCharacteristics": [
+      "Pale navigation rail and white reading surfaces.",
+      "Black pill actions with blue navigation and visible keyboard focus.",
+      "Generous grouping, simple outline SVG icons and factual amounts."
+    ],
+    "rules": [
+      {
+        "name": "The Labelled State Rule",
+        "body": "Color reinforces a visible label; it never carries a decision or provider state alone.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do keep source words, scope interpretations and human decisions distinguishable.",
+      "Do use visible labels, readable body text and keyboard focus states.",
+      "Do label sample reviews and local simulated invoice payments explicitly.",
+      "Do stack complex reading regions on narrow screens."
+    ],
+    "donts": [
+      "Don't reproduce PayPal branding or invent financial totals.",
+      "Don't add flashy animation or decorative gradients.",
+      "Don't hide the exact deliverable and price behind summary metrics.",
+      "Don't style disabled financial actions as available controls."
+    ]
+  }
+}

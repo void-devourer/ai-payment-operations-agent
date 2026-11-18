@@ -54,6 +54,12 @@ class StripeTestTarget(Contract):
     payment_intent_id: Annotated[str,Field(strict=True,pattern=r"^pi_[A-Za-z0-9]{1,100}$")]
 
 
+class PayPalTestTarget(Contract):
+    purchase_id: Identifier
+    customer_id: Identifier
+    order_id: Annotated[str,Field(strict=True,pattern=r'^[A-Z0-9]{8,32}$')]
+
+
 class Grant(Contract):
     contract_version: Literal["access_grant_v1"] = "access_grant_v1"
     operation_id: Identifier

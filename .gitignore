@@ -2,7 +2,12 @@
 .env
 .env.*
 !.env.example
+!.env.paypal.example
+!.env.scope.example
+.impeccable/questions/
+.impeccable/review/
 .local/
+.archify/
 .tools/
 *.key
 *.pem

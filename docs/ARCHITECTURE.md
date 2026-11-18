@@ -1,5 +1,13 @@
 # Architecture and correctness contracts
 
+**2026-10-15 PayPal addition:** the console has optional sandbox OAuth/order/capture
+reads, separate immutable order/capture bindings, purchase-subject durable jobs,
+postback-verified webhook receipts and an investigation-only policy. Unknown
+refund/dispute coverage cannot become empty history or enable access repair.
+The reference app has a typed inactive PayPal target. See
+[H2 verification](PAYPAL-VERIFICATION.md) for implemented scope and pending genuine
+acceptance. The original simulator/Stripe contracts below remain in use.
+
 Status: architecture contract, updated 2026-10-10. The independent simulator,
 reference app, durable ingestion, detection, React console, controlled repairs,
 and local release package are implemented. The original design includes further

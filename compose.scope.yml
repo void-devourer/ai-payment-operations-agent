@@ -1,0 +1,5 @@
+# Selected AI-provider credentials are injected only into the console API.
+# Combine with compose.paypal.yml separately for an app-owned PayPal sandbox.
+services:
+  console:
+    env_file: [.env.scope]

@@ -1,0 +1,6 @@
+# Optional, app-owned sandbox integration. Credentials stay out of images.
+services:
+  console:
+    env_file: [.env.paypal]
+  console-worker:
+    env_file: [.env.paypal]

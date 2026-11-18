@@ -1,6 +1,42 @@
 # Current project direction
 
-Updated: 2026-10-10
+Updated: 2026-10-15
+
+## Active direction — Scope & Pay
+
+On October 15 the user selected idea 1 from the hackathon research: freelance
+scope changes, explicit client agreement and payment. Build this complete visible
+workflow rather than continuing the merchant-investigation AI extension.
+
+[Product truth](PRODUCT.md), the [build contract](docs/SCOPE-CONTRACT.md) and
+[three-stage execution prompts](docs/SCOPE-BUILD-PROMPTS.md) govern this work.
+The new homepage is Scope & Pay. Preserve the former console at `/operations`.
+Real OpenAI and PayPal acceptance require credentials and measured checks; local
+sample review and simulated invoices must remain visibly labelled.
+
+## Previous direction — merchant investigation
+
+On October 14 the user approved adapting this project for the PayPal AI Hackathon
+and chose OpenAI for the investigation assistant. They have no PayPal account yet;
+prepare and test the integration offline while account access is pending.
+
+The product is now **Payment Incident Copilot**: a merchant investigation workflow
+connecting customer complaints, PayPal evidence and application access records.
+The first full slice covers paid/access disagreement; duplicate-payment and refund
+investigations follow as their provider evidence becomes supported. AI explains
+authorized evidence and uncertainty; application code controls actions.
+
+[docs/PAYPAL-HACKATHON-PLAN.md](docs/PAYPAL-HACKATHON-PLAN.md) governs new work and
+supersedes the prior deferral of additional providers and AI. Preserve existing
+software evidence and simulator functionality. The plan does not declare PayPal,
+AI, real merchant need or production acceptance complete. H1 and H2 have offline
+implementations: scoped PayPal order/capture reads, verified webhook ingestion,
+typed bindings and investigation-only cases. The default deployment remains
+simulator-backed; real sandbox acceptance awaits an account. H3 implements the
+OpenAI assistant next, with measured evaluation before enabling it.
+
+Use [docs/PAYPAL-SETUP.md](docs/PAYPAL-SETUP.md) and the draft
+[docs/AI-SPEC.md](docs/AI-SPEC.md) for integration and evaluation boundaries.
 
 ## Portfolio priority
 
@@ -77,8 +113,9 @@ runs, two corrective changes and reproduction commands are recorded in
 requires a new discussion with the user.
 
 On October 11 the user approved starting the next improvement sequence.
-Performance profiling and scheduling are completed locally; UI, the evaluated
-assistant, and deployment remain separate following phases. See
+Performance profiling and scheduling are completed locally. The operator UI and
+scoped current-record checks are implemented; the evaluated assistant and
+deployment remain following phases. See [docs/UI-IMPROVEMENT.md](docs/UI-IMPROVEMENT.md),
 [docs/NEXT-IMPROVEMENTS.md](docs/NEXT-IMPROVEMENTS.md) and
 [docs/PERFORMANCE-IMPROVEMENT.md](docs/PERFORMANCE-IMPROVEMENT.md).
 

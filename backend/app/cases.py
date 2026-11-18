@@ -2,14 +2,88 @@
 
 from datetime import UTC,datetime,timedelta
 import uuid
+import math
 
 from fastapi import APIRouter,HTTPException,Query,Request
 from pydantic import BaseModel,ConfigDict,Field
 
 from .contracts import Identifier
 from .security import actor
+from .jobs import enqueue,enqueue_purchase
 
 router=APIRouter()
+
+
+def check_availability(cursor, case_id):
+    cursor.execute("""SELECT now() AS server_now,
+        max(created_at + interval '30 seconds') FILTER (WHERE case_id=%s) AS case_until,
+        CASE WHEN count(*)>=6 THEN min(created_at) + interval '1 minute' END AS workspace_until
+        FROM case_audit WHERE action='request_check' AND created_at>now()-interval '1 minute'""", (case_id,))
+    row=cursor.fetchone()
+    until=max(t for t in (row['server_now'],row['case_until'],row['workspace_until']) if t is not None)
+    seconds=max(0,math.ceil((until-row['server_now']).total_seconds()))
+    return {'retry_after_seconds':seconds,'allowed':seconds==0}
+
+
+@router.get('/api/workspaces/{workspace}/cases/{case_id}/check-availability')
+def available_check(workspace: Identifier,case_id: Identifier,request: Request):
+    subject=actor(request,workspace)
+    with request.app.state.database.transaction(workspace,subject) as cursor:
+        cursor.execute('SELECT 1 FROM cases WHERE case_id=%s',(case_id,))
+        if cursor.fetchone() is None:
+            raise HTTPException(404,'Case not found')
+        return check_availability(cursor,case_id)
+
+
+@router.post('/api/workspaces/{workspace}/cases/{case_id}/check',status_code=202)
+def request_check(workspace: Identifier,case_id: Identifier,request: Request):
+    subject=actor(request,workspace,write=True)
+    with request.app.state.database.transaction(workspace,subject) as cursor:
+        # Serialize operator requests within this workspace, including cooldown
+        # checks. Worker publication does not acquire this advisory lock.
+        cursor.execute('SELECT pg_advisory_xact_lock(hashtext(%s))',('operator_check:'+workspace,))
+        cursor.execute('SELECT purchase_id,fingerprint FROM cases WHERE case_id=%s',(case_id,))
+        case=cursor.fetchone()
+        if case is None:
+            raise HTTPException(404,'Case not found')
+        limit=check_availability(cursor,case_id)
+        if not limit['allowed']:
+            raise HTTPException(429,'A check was recently requested; wait before requesting another',
+                                headers={'Retry-After':str(limit['retry_after_seconds'])})
+        # One read gathers all registered attempts for the purchase. Do not
+        # multiply the workload by enqueueing each attempt separately.
+        cursor.execute('SELECT connection_id FROM purchases WHERE purchase_id=%s',(case['purchase_id'],))
+        connection=cursor.fetchone()['connection_id']
+        if connection.startswith('paypal_'):
+            job_id=enqueue_purchase(cursor,workspace,connection,case['purchase_id'])
+        else:
+            cursor.execute('SELECT connection_id,payment_intent_id FROM payment_attempts WHERE purchase_id=%s ORDER BY payment_intent_id LIMIT 1',(case['purchase_id'],))
+            attempt=cursor.fetchone()
+            if attempt is None:
+                raise HTTPException(409,'No registered payment attempt available')
+            job_id=enqueue(cursor,workspace,attempt['connection_id'],attempt['payment_intent_id'])
+        cursor.execute("INSERT INTO case_audit(workspace_id,audit_id,case_id,subject,action,reason,fingerprint) VALUES (%s,%s,%s,%s,'request_check','Requested current source records',%s)",
+                       (workspace,uuid.uuid4().hex,case_id,subject,case['fingerprint']))
+        cursor.execute('SELECT now() AS requested_at')
+        return {'job_id':job_id,'requested_at':cursor.fetchone()['requested_at'],**check_availability(cursor,case_id)}
+
+
+@router.get('/api/workspaces/{workspace}/cases/{case_id}/checks/{job_id}')
+def check_status(workspace: Identifier,case_id: Identifier,job_id: Identifier,request: Request):
+    subject=actor(request,workspace)
+    with request.app.state.database.transaction(workspace,subject) as cursor:
+        cursor.execute("""SELECT j.state,j.due_at,j.last_error,o.started_at,o.finished_at,o.observation_id
+            FROM cases c JOIN purchases p USING(workspace_id,purchase_id)
+            JOIN jobs j ON j.workspace_id=p.workspace_id AND j.connection_id=p.connection_id AND
+                (j.purchase_id=p.purchase_id OR EXISTS(SELECT 1 FROM payment_attempts a WHERE
+                    a.workspace_id=p.workspace_id AND a.purchase_id=p.purchase_id AND a.payment_intent_id=j.payment_intent_id AND a.connection_id=j.connection_id))
+            LEFT JOIN evidence_heads h ON h.workspace_id=c.workspace_id AND h.purchase_id=c.purchase_id
+            LEFT JOIN observations o ON o.workspace_id=h.workspace_id AND o.observation_id=h.observation_id AND o.generation=h.generation
+            WHERE c.case_id=%s AND j.job_id=%s""",(case_id,job_id))
+        row=cursor.fetchone()
+        if row is None:
+            raise HTTPException(404,'Check not found for this case')
+        return dict(row)
 
 
 class Dismissal(BaseModel):
@@ -22,8 +96,9 @@ class Dismissal(BaseModel):
 def present(row):
     value=dict(row)
     windows=value.pop('windows',None) or {}
+    if value.get('provider')=='paypal': windows={key:window for key,window in windows.items() if key in ('payment','access')}
     now=datetime.now(UTC)
-    fresh=len(windows)==3 and all(window.get('complete') is True and
+    fresh=len(windows)==(2 if value.get('provider')=='paypal' else 3) and all(window.get('complete') is True and
         datetime.fromisoformat(window['finished_at'])<=now and
         timedelta(0)<=now-datetime.fromisoformat(window['started_at'])<=timedelta(seconds=60)
         for window in windows.values())
@@ -38,11 +113,13 @@ def present(row):
     return value
 
 
-CASE_SELECT="""SELECT c.*,e.outcome,e.reasons,e.policy_version,e.evaluated_at,
+CASE_SELECT="""SELECT c.*,e.outcome,e.reasons,e.policy_version,e.evaluated_at,cn.provider,
     o.facts->'windows' AS windows,(h.observation_id=c.latest_observation_id AND h.generation=o.generation) AS is_current
     FROM cases c JOIN evaluations e ON e.workspace_id=c.workspace_id AND e.observation_id=c.latest_observation_id
     JOIN observations o ON o.workspace_id=c.workspace_id AND o.observation_id=c.latest_observation_id
-    JOIN evidence_heads h ON h.workspace_id=c.workspace_id AND h.purchase_id=c.purchase_id"""
+    JOIN evidence_heads h ON h.workspace_id=c.workspace_id AND h.purchase_id=c.purchase_id
+    JOIN purchases p ON p.workspace_id=c.workspace_id AND p.purchase_id=c.purchase_id
+    JOIN connections cn ON cn.workspace_id=p.workspace_id AND cn.connection_id=p.connection_id"""
 
 
 @router.get('/api/workspaces/{workspace}/cases')
@@ -92,7 +169,7 @@ def timeline(workspace: Identifier,purchase_id: Identifier,request: Request,
 
 @router.post('/api/workspaces/{workspace}/cases/{case_id}/dismiss')
 def dismiss(workspace: Identifier,case_id: Identifier,body: Dismissal,request: Request):
-    subject=actor(request,workspace,write=True)
+    subject=actor(request,workspace,write=True,recent=True)
     if len(body.reason.strip())<5:
         raise HTTPException(422,'A meaningful disposition reason is required')
     with request.app.state.database.transaction(workspace,subject) as cursor:

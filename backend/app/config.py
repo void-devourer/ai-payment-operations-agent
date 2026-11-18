@@ -65,9 +65,10 @@ class Settings:
     keys: dict[str, dict[str, str]] = field(repr=False)
     console_url: str = "http://console:8000"
     simulator_url: str = "http://simulator:8000"
-    session_seconds: int = 3600
+    session_seconds: int = 604800
     reference_url: str = "http://reference:8000"
     stripe: dict[str, StripeConnection] = field(default_factory=dict,repr=False)
+    paypal: dict = field(default_factory=dict,repr=False)
 
     @classmethod
     def from_env(cls, service: str):
@@ -99,4 +100,6 @@ class Settings:
             } or parsed.username or parsed.password or parsed.query or parsed.fragment:
                 raise ValueError("Phase 1 service URLs must use the local deployment allowlist")
         stripe=stripe_connections_from_env() if service=="console" else {}
-        return cls(service, database_url, login_key, keys, console_url, simulator_url, reference_url=reference_url,stripe=stripe)
+        from .paypal_provider import connections_from_env
+        paypal=connections_from_env() if service=="console" else {}
+        return cls(service, database_url, login_key, keys, console_url, simulator_url, reference_url=reference_url,stripe=stripe,paypal=paypal)

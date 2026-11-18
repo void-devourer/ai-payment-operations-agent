@@ -50,6 +50,22 @@ def claim(database, workspace, intent=None, *, foreground_first=True):
         return dict(cursor.fetchone())
 
 
+def enqueue_purchase(cursor, workspace, connection, purchase, *, foreground=True):
+    """PayPal reads use a purchase subject, never a fabricated payment intent."""
+    cursor.execute("""INSERT INTO jobs(workspace_id,job_id,connection_id,purchase_id,foreground)
+        VALUES (%s,%s,%s,%s,%s) ON CONFLICT (workspace_id,connection_id,purchase_id)
+        WHERE state IN ('queued','leased','retry_wait') DO UPDATE
+        SET request_seq=jobs.request_seq+1,updated_at=now(),foreground=true,
+            due_at=CASE WHEN jobs.state='queued' THEN least(jobs.due_at,now()) ELSE jobs.due_at END
+        WHERE EXCLUDED.foreground RETURNING job_id""",(workspace,uuid.uuid4().hex,connection,purchase,foreground))
+    row=cursor.fetchone()
+    if row is None:
+        cursor.execute("""SELECT job_id FROM jobs WHERE connection_id=%s AND purchase_id=%s
+            AND state IN ('queued','leased','retry_wait')""",(connection,purchase))
+        row=cursor.fetchone()
+    return row['job_id']
+
+
 def lock_owned(cursor, job):
     cursor.execute("""SELECT * FROM jobs WHERE job_id=%s AND state='leased' AND
         lease_token=%s AND lease_until>clock_timestamp() FOR UPDATE""", (job["job_id"],job["lease_token"]))

@@ -168,6 +168,7 @@ That broader workload requires configurable identities and additional measuremen
 | --- | --- |
 | Simulator payment, signed delivery, independent reference app | Implemented |
 | Current evidence, detection, reconciliation, operator preview/approval | Implemented and integration tested |
+| Scoped, rate-limited operator source checks and readable investigation view | Implemented; see [UI-IMPROVEMENT.md](UI-IMPROVEMENT.md) |
 | One conditional access grant and same-identity recovery | Implemented and integration tested |
 | Isolated console restore with execution paused | Automated drill |
 | Public hosting, TLS, production OIDC, distributed quotas | Not provided |
